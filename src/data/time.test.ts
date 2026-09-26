@@ -8,7 +8,9 @@ import {
   formatDayHeader,
   formatTime,
   formatTimeRange,
+  eventWindow,
   isHappeningNow,
+  isLive,
   isWeekdayInZone,
   minutesInZone,
   relativeTime,
@@ -161,21 +163,76 @@ describe('zone-aware clock helpers', () => {
 });
 
 describe('status', () => {
-  const start = new Date('2026-09-25T18:00:00Z');
-  const end = new Date('2026-09-25T20:00:00Z');
+  const timed = {
+    start: new Date('2026-09-25T18:00:00Z'),
+    end: new Date('2026-09-25T20:00:00Z'),
+    allDay: false,
+    dayKey: '2026-09-25',
+    endDayKey: null,
+  };
 
   it('detects an event in progress', () => {
-    expect(isHappeningNow(start, end, new Date('2026-09-25T19:00:00Z'))).toBe(true);
-    expect(statusChip(start, end, new Date('2026-09-25T19:00:00Z'))).toBe('Happening now');
+    expect(isHappeningNow(timed.start, timed.end, new Date('2026-09-25T19:00:00Z'))).toBe(true);
+    expect(statusChip(timed, ET, new Date('2026-09-25T19:00:00Z'))).toBe('Happening now');
   });
 
-  it('treats an event with no end as two hours long', () => {
-    expect(isHappeningNow(start, null, new Date('2026-09-25T19:30:00Z'))).toBe(true);
-    expect(isHappeningNow(start, null, new Date('2026-09-25T20:30:00Z'))).toBe(false);
+  it('treats a timed event with no end as two hours long', () => {
+    expect(isHappeningNow(timed.start, null, new Date('2026-09-25T19:30:00Z'))).toBe(true);
+    expect(isHappeningNow(timed.start, null, new Date('2026-09-25T20:30:00Z'))).toBe(false);
   });
 
   it('counts down inside a day and stays quiet beyond it', () => {
-    expect(statusChip(start, end, new Date('2026-09-25T15:00:00Z'))).toBe('In 3 hours');
-    expect(statusChip(start, end, new Date('2026-09-20T15:00:00Z'))).toBeNull();
+    expect(statusChip(timed, ET, new Date('2026-09-25T15:00:00Z'))).toBe('In 3 hours');
+    expect(statusChip(timed, ET, new Date('2026-09-20T15:00:00Z'))).toBeNull();
+  });
+});
+
+describe('all-day spans', () => {
+  const allDay = {
+    start: new Date('2026-09-26T04:00:00Z'), // midnight Eastern
+    end: null,
+    allDay: true,
+    dayKey: '2026-09-26',
+    endDayKey: null,
+  };
+
+  it('runs the whole day, not two hours', () => {
+    const w = eventWindow(allDay, ET);
+    expect(w.from.toISOString()).toBe('2026-09-26T04:00:00.000Z');
+    expect(w.to.toISOString()).toBe('2026-09-27T03:59:59.999Z');
+  });
+
+  it('is live at midday, not only just after midnight', () => {
+    // The two-hour default made every date-only listing "happening now"
+    // between midnight and 2am, and finished for the rest of its own day.
+    expect(isLive(allDay, ET, new Date('2026-09-26T04:30:00Z'))).toBe(true);
+    expect(isLive(allDay, ET, new Date('2026-09-26T17:00:00Z'))).toBe(true);
+    expect(isLive(allDay, ET, new Date('2026-09-27T05:00:00Z'))).toBe(false);
+    expect(isLive(allDay, ET, new Date('2026-09-25T20:00:00Z'))).toBe(false);
+  });
+
+  it('covers every day of a multi-day span', () => {
+    const multi = { ...allDay, endDayKey: '2026-09-30' };
+    expect(isLive(multi, ET, new Date('2026-09-28T17:00:00Z'))).toBe(true);
+    expect(isLive(multi, ET, new Date('2026-10-01T17:00:00Z'))).toBe(false);
+  });
+
+  it('says "Happening now" across the whole day', () => {
+    expect(statusChip(allDay, ET, new Date('2026-09-26T17:00:00Z'))).toBe('Happening now');
+  });
+
+  it('leaves a timed event unchanged', () => {
+    const w = eventWindow(
+      {
+        start: new Date('2026-09-26T22:00:00Z'),
+        end: new Date('2026-09-27T01:00:00Z'),
+        allDay: false,
+        dayKey: '2026-09-26',
+        endDayKey: null,
+      },
+      ET,
+    );
+    expect(w.from.toISOString()).toBe('2026-09-26T22:00:00.000Z');
+    expect(w.to.toISOString()).toBe('2026-09-27T01:00:00.000Z');
   });
 });

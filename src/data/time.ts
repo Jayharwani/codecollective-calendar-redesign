@@ -281,13 +281,57 @@ export function isHappeningNow(start: Date, end: Date | null, now: Date): boolea
   return now >= start && now <= finish;
 }
 
-/** "In 3 hours", "Happening now", or null when further out than a day. */
-export function statusChip(start: Date, end: Date | null, now: Date = new Date()): string | null {
-  if (isHappeningNow(start, end, now)) return 'Happening now';
-  const finish = end ?? new Date(start.getTime() + 2 * 3600_000);
-  if (now > finish) return null;
-  const hrs = (start.getTime() - now.getTime()) / 3600_000;
-  if (hrs <= 24) return relativeTime(start, now).replace(/^in /, 'In ');
+/**
+ * The span an event actually occupies.
+ *
+ * An all-day listing runs for its whole day, not the two hours a timed event
+ * with no end is given. Without this, every date-only listing counted as
+ * "happening now" between midnight and 2 a.m. and as finished for the rest of
+ * the day it is actually on.
+ */
+export function eventWindow(
+  ev: {
+    start: Date;
+    end: Date | null;
+    allDay: boolean;
+    dayKey: string;
+    endDayKey: string | null;
+  },
+  tz: string,
+): { from: Date; to: Date } {
+  if (ev.allDay) {
+    return {
+      from: startOfDayKey(ev.dayKey, tz),
+      to: endOfDayKey(ev.endDayKey ?? ev.dayKey, tz),
+    };
+  }
+  return { from: ev.start, to: ev.end ?? new Date(ev.start.getTime() + 2 * 3600_000) };
+}
+
+/** Whether the event is running at `now`, honouring all-day spans. */
+export function isLive(
+  ev: Parameters<typeof eventWindow>[0],
+  tz: string,
+  now: Date,
+): boolean {
+  const w = eventWindow(ev, tz);
+  return now >= w.from && now <= w.to;
+}
+
+/**
+ * "In 3 hours", "Happening now", or null when it is further out than a day.
+ * All-day listings are measured against their whole day.
+ */
+export function statusChip(
+  ev: Parameters<typeof eventWindow>[0],
+  tz: string,
+  now: Date = new Date(),
+): string | null {
+  const w = eventWindow(ev, tz);
+  if (now >= w.from && now <= w.to) return 'Happening now';
+  if (now > w.to) return null;
+  const hrs = (w.from.getTime() - now.getTime()) / 3600_000;
+  if (hrs <= 24) return relativeTime(w.from, now).replace(/^in /, 'In ');
   return null;
 }
 

@@ -38,11 +38,11 @@ export function AgendaSkeleton() {
   );
 }
 
+/** Only the counts are unknown before the feed lands; the heading is not. */
 export function MetaSkeleton() {
   return (
-    <div aria-hidden className="space-y-2">
-      <div className="skeleton h-9 w-72 rounded-[var(--r-cell)]" />
-      <div className="skeleton h-4 w-96 max-w-full rounded-[var(--r-cell)]" />
+    <div aria-hidden className="mt-2">
+      <div className="skeleton h-5 w-96 max-w-full rounded-[var(--r-cell)]" />
     </div>
   );
 }

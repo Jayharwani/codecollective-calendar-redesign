@@ -87,7 +87,7 @@ function Body({
   onOpenOther,
 }: Omit<EventSheetProps, 'isPhone' | 'onClose' | 'event' | 'onToast'> & { event: CalEvent }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const status = statusChip(event.start, event.end, now);
+  const status = statusChip(event, tz, now);
   const maps = mapsUrl(event);
   const timeText = event.allDay ? 'All day' : formatTimeRange(event.start, event.end, tz);
 

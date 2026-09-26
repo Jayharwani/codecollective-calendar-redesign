@@ -2,8 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import type { DaySectionModel } from '../../data/pipeline';
 import { DaySection } from './DaySection';
 
-/** How many day sections render before the sentinel loads the next batch. */
+/** How many day sections the sentinel adds each time it comes into view. */
 const BATCH = 14;
+/**
+ * The first paint renders fewer. Today alone can hold 105 events, so a full
+ * 14-day first slice put ~350 rows on the main thread before anything was
+ * interactive. The sentinel fills the rest in immediately.
+ */
+const FIRST_BATCH = 3;
 
 export type AgendaProps = {
   days: DaySectionModel[];
@@ -40,13 +46,13 @@ export function Agenda({
   onVisibleDayChange,
   resetToken,
 }: AgendaProps) {
-  const [limit, setLimit] = useState(BATCH);
+  const [limit, setLimit] = useState(FIRST_BATCH);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   // A new filter result starts the list again from the top batch.
   useEffect(() => {
-    setLimit(BATCH);
+    setLimit(FIRST_BATCH);
   }, [resetToken]);
 
   useEffect(() => {

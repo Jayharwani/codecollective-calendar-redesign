@@ -140,7 +140,6 @@ export const EventRow = memo(function EventRow({
         }`}
         style={{
           background: selected ? 'var(--accent-soft)' : undefined,
-          opacity: event.cancelled ? 0.6 : 1,
         }}
         onMouseEnter={(e) => {
           if (!selected) e.currentTarget.style.background = 'var(--surface-2)';
@@ -177,7 +176,15 @@ export const EventRow = memo(function EventRow({
         </div>
 
         <div className="min-w-0">
-          <h3 className="t-row-title clamp-2" style={{ color: 'var(--ink)' }}>
+          {/* A cancelled listing is struck through and badged rather than
+              faded: 60% opacity took the muted ink to 3.3:1. */}
+          <h3
+            className="t-row-title clamp-2"
+            style={{
+              color: event.cancelled ? 'var(--ink-2)' : 'var(--ink)',
+              textDecoration: event.cancelled ? 'line-through' : undefined,
+            }}
+          >
             {event.title}
             {event.cancelled && <Badge tone="danger">Cancelled</Badge>}
             {event.featured && <Badge tone="accent">Code Collective</Badge>}

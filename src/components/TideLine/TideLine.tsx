@@ -183,9 +183,9 @@ export function TideLine({ todayKey, tz, counts, activeDay, onPick, ready }: Tid
                 type="button"
                 tabIndex={i === focusIndex ? 0 : -1}
                 aria-current={isActive ? 'date' : undefined}
-                aria-label={`${formatShortDay(dayKey, tz)}, ${
-                  count === 1 ? '1 event' : `${count} events`
-                }`}
+                // No aria-label: WCAG 2.5.3 wants the accessible name to
+                // contain the visible text, so the weekday and numeral stay
+                // in the name and only the count is added for screen readers.
                 title={`${formatShortDay(dayKey, tz)}: ${
                   count === 1 ? '1 event' : `${count} events`
                 }`}
@@ -202,23 +202,24 @@ export function TideLine({ todayKey, tz, counts, activeDay, onPick, ready }: Tid
                 <span
                   className="t-caption h-4 leading-4"
                   style={{ color: 'var(--ink-2)', opacity: month ? 1 : 0 }}
-                  aria-hidden
+                  aria-hidden={month ? undefined : true}
                 >
                   {month ?? ' '}
                 </span>
                 <span
                   className="t-tide-day tide-weekday"
                   style={{ color: isActive ? 'var(--accent)' : 'var(--ink-2)' }}
-                  aria-hidden
                 >
                   {weekday}
                 </span>
                 <span
                   className="t-tide-num"
                   style={{ color: isActive ? 'var(--accent)' : 'var(--ink)' }}
-                  aria-hidden
                 >
                   {numeral}
+                </span>
+                <span className="sr-only">
+                  {`, ${count === 1 ? '1 event' : `${count} events`}`}
                 </span>
                 <span
                   aria-hidden

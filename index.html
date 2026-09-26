@@ -17,6 +17,61 @@
     />
     <meta property="og:type" content="website" />
     <link rel="preconnect" href="https://codecollective.us" crossorigin />
+    <!--
+      Just enough CSS for the first screen, inline. The built stylesheet is a
+      render-blocking request, and at Lighthouse's 150ms RTT that alone pushed
+      first contentful paint past 2s. The full sheet still loads and wins.
+    -->
+    <style>
+      :root {
+        --bg: #f5f7f9;
+        --ink: #1b2733;
+        --ink-2: #586878;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #0e1a24;
+          --ink: #e6edf2;
+          --ink-2: #93a4b3;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #0e1a24;
+        --ink: #e6edf2;
+        --ink-2: #93a4b3;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Instrument Sans Variable', ui-sans-serif, system-ui, -apple-system,
+          'Segoe UI', Roboto, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      #boot h1 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 34px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      #boot p {
+        margin: 8px 0 0;
+        font-size: 14px;
+        line-height: 20px;
+      }
+      @media (min-width: 768px) {
+        #boot h1 {
+          font-size: 40px;
+          line-height: 44px;
+        }
+      }
+    </style>
     <script>
       // Resolve the theme before first paint so there is no flash of the wrong
       // surface. Mirrors the logic in src/app/theme.ts.
@@ -29,7 +84,48 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      The heading and the meta line are painted from static markup, before any
+      JavaScript runs. The feed is a 2.6 MB third-party file, so waiting for it
+      to paint the largest element put LCP at 4.4s on throttled mobile. React
+      replaces this the moment it mounts, at the same size and position, so
+      there is no layout shift.
+    -->
+    <div id="root">
+      <div id="boot" style="max-width: 1440px; margin: 0 auto; padding: 24px 16px 16px">
+        <h1 style="color: var(--ink)">
+          What&rsquo;s on in <span id="boot-city">Baltimore</span>
+        </h1>
+        <p style="color: var(--ink-2)">
+          Loading events from the Code Collective calendar. Times in
+          <span id="boot-zone">Eastern Time</span>.
+        </p>
+      </div>
+    </div>
+    <script>
+      // Correct the city and zone before first paint when the URL asks for a
+      // city other than the default.
+      (function () {
+        var names = {
+          baltimore: ['Baltimore', 'Eastern Time'],
+          dc: ['Washington DC', 'Eastern Time'],
+          philadelphia: ['Philadelphia', 'Eastern Time'],
+          pittsburgh: ['Pittsburgh', 'Eastern Time'],
+          westvirginia: ['West Virginia', 'Eastern Time'],
+          hawaii: ['Hawaii', 'Hawaii Time'],
+          virtual: ['Virtual', 'your time'],
+        };
+        try {
+          var c = new URLSearchParams(location.search).get('city');
+          if (c && names[c]) {
+            document.getElementById('boot-city').textContent = names[c][0];
+            document.getElementById('boot-zone').textContent = names[c][1];
+          }
+        } catch (e) {
+          /* the default markup is already correct */
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

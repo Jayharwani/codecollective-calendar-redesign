@@ -558,10 +558,20 @@ function Calendar() {
   );
 }
 
-function LoadingShell() {
+/**
+ * The heading is known from the URL alone, so it paints at first contentful
+ * paint instead of waiting on a 2.6 MB feed. Before this, the largest
+ * contentful element was the meta line with 4.3s of render delay, because
+ * nothing at all was painted until the feed had been fetched, parsed and
+ * normalized.
+ */
+function LoadingShell({ cityLabel }: { cityLabel: string }) {
   return (
     <>
       <div className="mx-auto w-full max-w-[1440px] px-4 pt-6 pb-4 sm:px-6">
+        <h1 className="t-display" style={{ color: 'var(--ink)' }}>
+          What&rsquo;s on in {cityLabel}
+        </h1>
         <MetaSkeleton />
       </div>
       <TideSkeleton />
@@ -589,7 +599,7 @@ export function App() {
           />
         )}
       >
-        <Suspense fallback={<LoadingShell />}>
+        <Suspense fallback={<LoadingShell cityLabel={cityLabel} />}>
           <Calendar />
         </Suspense>
       </Boundary>

@@ -7,12 +7,7 @@ import {
   type FilterState,
   type PredicateContext,
 } from './filters';
-import {
-  TIME_OF_DAY_LABEL,
-  TIME_OF_DAY_ORDER,
-  isHappeningNow,
-  timeOfDayOf,
-} from './time';
+import { TIME_OF_DAY_LABEL, TIME_OF_DAY_ORDER, isLive, timeOfDayOf } from './time';
 import type { CalEvent, SectorId, TimeOfDay } from './types';
 
 /** How many events a day may hold before it is split into day parts. */
@@ -70,9 +65,7 @@ function groupDay(
   events: CalEvent[],
   opts: { isToday: boolean; now: Date; tz: string },
 ): TimeGroupModel[] | null {
-  const live = opts.isToday
-    ? events.filter((e) => isHappeningNow(e.start, e.end, opts.now))
-    : [];
+  const live = opts.isToday ? events.filter((e) => isLive(e, opts.tz, opts.now)) : [];
   const needsSplit = events.length > SPLIT_THRESHOLD;
 
   if (live.length === 0 && !needsSplit) return null;
