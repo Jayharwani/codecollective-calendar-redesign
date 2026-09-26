@@ -7,7 +7,18 @@ import { expect, test, type Page } from '@playwright/test';
  */
 const SERIOUS = new Set(['serious', 'critical']);
 
+/**
+ * `content-visibility: auto` on the day sections is a real rendering win, but
+ * axe queries geometry for every element and each query forces layout on a
+ * skipped subtree. Measured on this suite, leaving it on made a single scan
+ * take 201s instead of 70s. Neutralising it for the scan changes no markup,
+ * no roles and no colours — only whether the browser is allowed to skip
+ * rendering work — so the scan still sees exactly what assistive technology
+ * would.
+ */
 async function scan(page: Page, label: string) {
+  await page.addStyleTag({ content: '.day-section { content-visibility: visible !important; }' });
+
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();

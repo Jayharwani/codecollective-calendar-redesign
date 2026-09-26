@@ -28,8 +28,9 @@ Then open <http://localhost:5173/?city=baltimore>.
 |---|---|
 | `npm run dev` | Vite dev server |
 | `npm run build` | Typecheck, then a production build into `dist/` |
+| `npm run build:preview` | The hosted preview bundle, relative URLs plus a concept banner |
 | `npm test` | 137 unit tests |
-| `npm run test:e2e` | 42 Playwright tests, desktop and phone, including axe |
+| `npm run test:e2e` | 80 Playwright tests, desktop and phone, including axe |
 | `npm run typecheck` | TypeScript only |
 
 Two environment variables, both optional:
@@ -163,6 +164,15 @@ Technology being 4% of the listings is why the sector rail is ordered
 mission-first rather than by volume: it is why someone opens a calendar branded
 for technologists, and sorting by count would bury it below Culture's 824.
 
+One thing worth passing back upstream: twelve listings, about 0.7%, have a
+title that is not a title. Three are raw ISO timestamps
+(`2026-09-30T18:30:00`), three are street addresses, one is `3:00 pm`, and five
+are scraper notices, including `There were no events found matching your search
+criteria. Please search again.` They come from the Harford County Government
+Calendar and Maryland Active Data Calendar sources. Nothing here filters them,
+because the brief puts the scraping pipeline out of scope and quietly hiding
+rows would be inventing a judgement the data does not support.
+
 ---
 
 ## Accessibility
@@ -170,8 +180,9 @@ for technologists, and sorting by count would bury it below Culture's 824.
 Targets WCAG 2.2 AA, verified rather than asserted. `npm run test:e2e` runs axe
 over the agenda, the month grid, the open detail sheet, the open filters sheet
 and the map, in both themes, on desktop and phone, and fails the build on any
-serious or critical violation. Lighthouse reports **100 for accessibility** on
-both profiles.
+serious or critical violation. It builds against the committed snapshot, so it
+is deterministic and does not pull 2.6 MB from a third party on every page
+load. Lighthouse reports **100 for accessibility** on both profiles.
 
 The list is the accessible equivalent of the map. Every event is a real anchor
 with a visible focus ring, the tide line is a roving-tabindex toolbar with arrow
