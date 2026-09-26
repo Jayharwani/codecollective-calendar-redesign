@@ -117,14 +117,16 @@ export function EmptyState({
       </h2>
 
       {searching && hasDateFilter && (
-        <button
-          type="button"
-          onClick={onSearchAllDates}
-          className="t-body mt-4 underline"
-          style={{ color: 'var(--accent)', textUnderlineOffset: '2px' }}
-        >
-          Search all dates
-        </button>
+        <p className="mt-4">
+          <button
+            type="button"
+            onClick={onSearchAllDates}
+            className="t-body underline"
+            style={{ color: 'var(--accent)', textUnderlineOffset: '2px', minHeight: 44 }}
+          >
+            Search all dates
+          </button>
+        </p>
       )}
 
       {relaxations.length > 0 && (
@@ -144,14 +146,16 @@ export function EmptyState({
         </ul>
       )}
 
-      <button
-        type="button"
-        onClick={onClearAll}
-        className="t-meta mt-6 underline"
-        style={{ color: 'var(--ink-2)', textUnderlineOffset: '2px' }}
-      >
-        Clear all filters
-      </button>
+      <p className="mt-6">
+        <button
+          type="button"
+          onClick={onClearAll}
+          className="t-meta underline"
+          style={{ color: 'var(--ink-2)', textUnderlineOffset: '2px', minHeight: 44 }}
+        >
+          Clear all filters
+        </button>
+      </p>
     </div>
   );
 }

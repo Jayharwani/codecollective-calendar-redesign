@@ -143,13 +143,19 @@ function Body({
       <div className="flex items-start gap-2">
         <MapPin size={18} strokeWidth={1.5} aria-hidden className="mt-[2px] shrink-0" style={{ color: 'var(--ink-2)' }} />
         <div className="min-w-0">
+          {/* Never say "Location not listed" above an address. Some rows carry
+              only a country, which is not a venue but is not nothing either. */}
           <p className="t-body" style={{ color: 'var(--ink)' }}>
-            {event.venue ?? 'Location not listed'}
+            {event.venue ?? event.address ?? 'Location not listed'}
           </p>
-          {event.address && (
+          {event.venue && event.address && (
             <p className="t-meta" style={{ color: 'var(--ink-2)' }}>
               {event.address}
-              {event.locality && event.address.includes(event.locality) ? '' : event.locality ? `, ${event.locality}` : ''}
+              {event.locality && event.address.includes(event.locality)
+                ? ''
+                : event.locality
+                  ? `, ${event.locality}`
+                  : ''}
             </p>
           )}
           {maps && (

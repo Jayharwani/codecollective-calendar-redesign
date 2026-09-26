@@ -98,8 +98,11 @@ export const EventRow = memo(function EventRow({
   onHover,
   flash,
 }: EventRowProps) {
+  // Fall back to the address when there is no venue name, so a row only says
+  // "Location not listed" when the feed really gave us nothing.
   const place =
-    [event.venue, event.locality].filter(Boolean).join(', ') || 'Location not listed';
+    [event.venue ?? event.address, event.locality].filter(Boolean).join(', ') ||
+    'Location not listed';
 
   // The accessible description carries everything colour and layout imply.
   const sectorNames = event.sectors.map((s) => SECTOR_LABEL[s]).join(', ');
