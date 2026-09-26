@@ -20,19 +20,29 @@ test.describe('keyboard', () => {
     const tabbable = toolbar.locator('button[tabindex="0"]');
     await expect(tabbable).toHaveCount(1);
 
+    // The days carry no aria-label on purpose: WCAG 2.5.3 wants the
+    // accessible name to contain the visible text, so the name is composed
+    // from the weekday, the numeral and a visually hidden count.
+    const focusedDay = () =>
+      page.evaluate(() => document.activeElement?.getAttribute('data-tide-day'));
+
     await tabbable.focus();
-    const first = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+    const first = await focusedDay();
+    expect(first).not.toBeNull();
+
     await page.keyboard.press('ArrowRight');
-    const second = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
-    expect(second).not.toBe(first);
+    expect(await focusedDay()).not.toBe(first);
 
     await page.keyboard.press('Home');
-    const home = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
-    expect(home).toBe(first);
+    expect(await focusedDay()).toBe(first);
 
     await page.keyboard.press('End');
-    const end = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
-    expect(end).not.toBe(first);
+    expect(await focusedDay()).not.toBe(first);
+
+    // The name a screen reader hears still carries the weekday and the count.
+    const name = await page.evaluate(() => document.activeElement?.textContent ?? '');
+    expect(name).toMatch(/\d/);
+    expect(name).toMatch(/event/);
   });
 
   test('every event row is a real link with a visible focus ring', async ({ page }) => {

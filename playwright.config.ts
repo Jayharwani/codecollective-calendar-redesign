@@ -41,7 +41,9 @@ export default defineConfig({
   webServer: {
     command: 'npm run build:only && npx vite preview --port 4173 --strictPort',
     port: 4173,
-    reuseExistingServer: true,
+    // Always rebuild. Reusing a preview left running by hand silently tests
+    // stale output, which cost real debugging time.
+    reuseExistingServer: false,
     timeout: 180_000,
   },
 });

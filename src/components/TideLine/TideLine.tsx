@@ -181,6 +181,7 @@ export function TideLine({ todayKey, tz, counts, activeDay, onPick, ready }: Tid
             >
               <button
                 type="button"
+                data-tide-day={dayKey}
                 tabIndex={i === focusIndex ? 0 : -1}
                 aria-current={isActive ? 'date' : undefined}
                 // No aria-label: WCAG 2.5.3 wants the accessible name to
