@@ -6,6 +6,9 @@ import tailwindcss from '@tailwindcss/vite';
 // root, at /calendar-next/, or on a static host that needs relative URLs.
 export default defineConfig({
   base: process.env.VITE_BASE ?? '/',
+  // MapLibre ships its own web worker. Pre-bundling it in dev rewrites the
+  // worker URL and the map fails to start, so it is left alone.
+  optimizeDeps: { exclude: ['maplibre-gl'] },
   plugins: [react(), tailwindcss()],
   build: {
     target: 'es2022',
@@ -19,9 +22,5 @@ export default defineConfig({
         },
       },
     },
-  },
-  test: {
-    environment: 'node',
-    include: ['src/**/*.test.ts'],
   },
 });

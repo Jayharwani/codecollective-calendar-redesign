@@ -78,6 +78,37 @@ export function minutesInZone(date: Date, tz: string): number {
   return hour * 60 + minute;
 }
 
+/**
+ * Intl.formatToParts costs a microsecond or two, which is several milliseconds
+ * across 1,695 events on every keystroke. Event Date objects are stable for the
+ * life of a city's payload, so the answer is cached against them.
+ */
+const clockCache = new WeakMap<Date, Map<string, { minutes: number; weekday: number }>>();
+
+function clockFor(date: Date, tz: string): { minutes: number; weekday: number } {
+  let byZone = clockCache.get(date);
+  if (!byZone) {
+    byZone = new Map();
+    clockCache.set(date, byZone);
+  }
+  let hit = byZone.get(tz);
+  if (!hit) {
+    const { hour, minute, weekday } = zoneParts(date, tz);
+    const wd = WD.indexOf(weekday);
+    hit = { minutes: hour * 60 + minute, weekday: wd === -1 ? 0 : wd };
+    byZone.set(tz, hit);
+  }
+  return hit;
+}
+
+export function minutesInZoneCached(date: Date, tz: string): number {
+  return clockFor(date, tz).minutes;
+}
+
+export function weekdayInZoneCached(date: Date, tz: string): number {
+  return clockFor(date, tz).weekday;
+}
+
 /** A Date at 00:00 of `dayKey` in `tz`. DST-safe via TZDate. */
 export function startOfDayKey(dayKey: string, tz: string): Date {
   const [y, m, d] = dayKey.split('-').map(Number);

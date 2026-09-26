@@ -286,6 +286,51 @@ time,
   }
 }
 
+/* ---------- Row hairlines, inset to the content column ---------- */
+
+.row-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row-list > li + li {
+  position: relative;
+}
+.row-list > li + li::before {
+  content: '';
+  position: absolute;
+  inset: 0 var(--s4) auto;
+  border-top: 1px solid var(--line);
+}
+
+.rail-item .rail-icon {
+  transition:
+    transform 0.16s ease,
+    filter 0.16s ease;
+}
+@media (hover: hover) {
+  .rail-item:hover .rail-icon {
+    transform: translateY(-1px);
+    filter: drop-shadow(0 2px 3px rgb(14 26 36 / 0.18));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-item .rail-icon {
+    transition: none;
+  }
+  .rail-item:hover .rail-icon {
+    transform: none;
+  }
+}
+
+/* Short viewports drop the weekday label so the sticky chrome stays inside
+   its 30% budget. */
+@media (max-height: 700px) {
+  .tide-weekday {
+    display: none;
+  }
+}
+
 /* ---------- Progressive rendering ---------- */
 
 .day-section {

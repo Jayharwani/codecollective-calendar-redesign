@@ -46,8 +46,60 @@ function validDate(value: string | null | undefined, zone: string): Date | null 
   return parseInstant(value, zone);
 }
 
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  ndash: '–',
+  mdash: '—',
+  lsquo: '‘',
+  rsquo: '’',
+  ldquo: '“',
+  rdquo: '”',
+  hellip: '…',
+  eacute: 'é',
+  egrave: 'è',
+  uuml: 'ü',
+  ouml: 'ö',
+  auml: 'ä',
+  ntilde: 'ñ',
+  deg: '°',
+  middot: '·',
+  bull: '•',
+  trade: '™',
+  reg: '®',
+  copy: '©',
+};
+
+/**
+ * Plain-text fields arrive HTML-encoded from several scrapers: 15 titles and
+ * 10 location fields in the Baltimore feed carry things like `&#038;` and
+ * `&#8217;`. One decode pass, which is what a browser would render. Decoding
+ * twice would mangle text that legitimately reads "&amp;".
+ *
+ * Written by hand rather than through the DOM so it behaves identically in
+ * the browser and under test.
+ */
+export function decodeEntities(input: string): string {
+  if (!input.includes('&')) return input;
+  return input.replace(
+    /&(?:([a-zA-Z][a-zA-Z0-9]{1,31})|#(\d{1,7})|#[xX]([0-9a-fA-F]{1,6}));/g,
+    (match: string, named?: string, dec?: string, hex?: string) => {
+      if (named !== undefined) return NAMED_ENTITIES[named.toLowerCase()] ?? match;
+      const code = dec !== undefined ? Number.parseInt(dec, 10) : Number.parseInt(hex ?? '', 16);
+      // Reject surrogate halves and anything past the Unicode range.
+      if (!Number.isFinite(code) || code <= 0 || code > 0x10ffff) return match;
+      if (code >= 0xd800 && code <= 0xdfff) return match;
+      return String.fromCodePoint(code);
+    },
+  );
+}
+
 function cleanText(value: string | null | undefined): string {
-  return (value ?? '').replace(/\r\n?/g, '\n').trim();
+  return decodeEntities((value ?? '').replace(/\r\n?/g, '\n')).trim();
 }
 
 /**
@@ -80,14 +132,14 @@ function normalizeLocation(loc: RawEvent['location']): {
 
   // Some rows ship the location as a bare string.
   if (typeof loc === 'string') {
-    const v = loc.trim();
+    const v = cleanText(loc);
     return { venue: v === '' ? null : v, address: null, locality: null, coords: null };
   }
 
   const o = loc as RawLocation;
-  const name = (o.name ?? '').trim();
-  const address = (o.address ?? '').trim();
-  const city = (o.city ?? '').trim();
+  const name = cleanText(o.name);
+  const address = cleanText(o.address);
+  const city = cleanText(o.city);
 
   const lat = o.latitude;
   const lng = o.longitude;

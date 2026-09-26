@@ -2,9 +2,9 @@ import { LENSES, lensCategoriesForTags } from './lenses';
 import {
   TIME_OF_DAY_WINDOW,
   addDaysToKey,
-  isWeekdayInZone,
-  minutesInZone,
+  minutesInZoneCached,
   weekdayInZone,
+  weekdayInZoneCached,
 } from './time';
 import type { CalEvent, DatePreset, LensId, SectorId, TimeOfDay } from './types';
 
@@ -176,7 +176,7 @@ export function buildPredicates(state: FilterState, ctx: PredicateContext): Pred
   const time: Predicates['time'] = !needsTime
     ? PASS
     : (e) => {
-        const minutes = minutesInZone(e.start, tz);
+        const minutes = minutesInZoneCached(e.start, tz);
         if (hasChips && !matchesTimesOfDay(minutes, state.timesOfDay)) return false;
         if (hasRaw) {
           if (rawFrom! <= rawTo!) {
@@ -188,7 +188,8 @@ export function buildPredicates(state: FilterState, ctx: PredicateContext): Pred
         }
         if (state.outsideWorkHours) {
           // Hide weekday events that start between 9am and 5pm.
-          if (isWeekdayInZone(e.start, tz) && minutes >= 9 * 60 && minutes < 17 * 60) return false;
+          const wd = weekdayInZoneCached(e.start, tz);
+          if (wd >= 1 && wd <= 5 && minutes >= 9 * 60 && minutes < 17 * 60) return false;
         }
         return true;
       };

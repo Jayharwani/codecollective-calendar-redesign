@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { eventKey, fnv1a, normalizeEvent, normalizeEvents, toExcerpt } from './normalize';
+import {
+  decodeEntities,
+  eventKey,
+  fnv1a,
+  normalizeEvent,
+  normalizeEvents,
+  toExcerpt,
+} from './normalize';
 import type { RawEvent } from './types';
 
 const ET = 'America/New_York';
@@ -293,6 +300,45 @@ describe('scrapeTime, which arrives in four shapes', () => {
 
   it('yields null for an unparseable stamp', () => {
     expect(normalizeEvent(raw({ scrapeTime: 'whenever' }), opts)!.scrapedAt).toBeNull();
+  });
+});
+
+describe('html entities in plain-text fields', () => {
+  it('decodes the entities the feed actually ships', () => {
+    const ev = normalizeEvent(
+      raw({ name: 'Full Body Sculpt: Strength &amp; Conditioning' }),
+      opts,
+    )!;
+    expect(ev.title).toBe('Full Body Sculpt: Strength & Conditioning');
+  });
+
+  it('decodes zero-padded and named numeric references', () => {
+    expect(decodeEntities('Rock &#038; Roll')).toBe('Rock & Roll');
+    expect(decodeEntities('Sept &#8211; Oct')).toBe('Sept – Oct');
+    expect(decodeEntities('It&#8217;s here')).toBe('It’s here');
+    expect(decodeEntities('She said &quot;hi&quot;')).toBe('She said "hi"');
+    expect(decodeEntities('caf&eacute;')).toBe('café');
+    expect(decodeEntities('&#x2014;')).toBe('—');
+  });
+
+  it('decodes once, so text that reads &amp;amp; survives', () => {
+    expect(decodeEntities('A &amp;amp; B')).toBe('A &amp; B');
+  });
+
+  it('leaves unknown or malformed references alone', () => {
+    expect(decodeEntities('50 &widget; each')).toBe('50 &widget; each');
+    expect(decodeEntities('a & b')).toBe('a & b');
+    expect(decodeEntities('&#0;')).toBe('&#0;');
+    expect(decodeEntities('&#xD800;')).toBe('&#xD800;');
+  });
+
+  it('decodes venue and locality too', () => {
+    const ev = normalizeEvent(
+      raw({ location: { name: 'Bar &amp; Grill', address: '1 Rock &#038; Roll Way', city: 'Towson' } }),
+      opts,
+    )!;
+    expect(ev.venue).toBe('Bar & Grill');
+    expect(ev.address).toBe('1 Rock & Roll Way');
   });
 });
 
