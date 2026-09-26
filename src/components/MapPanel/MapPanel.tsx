@@ -1,5 +1,11 @@
 import type { FeatureCollection, Point } from 'geojson';
 import type { GeoJSONSource, Map as MapLibreMap, MapGeoJSONFeature } from 'maplibre-gl';
+// MapLibre resolves its worker at runtime with
+// `new URL('./maplibre-gl-worker.mjs', import.meta.url)`, which no bundler can
+// see, so the file is never emitted and every production build silently loses
+// the worker: the canvas mounts and no tile ever draws. Vite bundles it here
+// (it imports maplibre-gl-shared.mjs) and the URL is handed to setWorkerUrl.
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { useEffect, useRef, useState } from 'react';
 import { haversineMiles } from '../../data/filters';
 import { formatTime } from '../../data/time';
@@ -126,6 +132,9 @@ export default function MapPanel({
         const maplibre = await import('maplibre-gl');
         await import('maplibre-gl/dist/maplibre-gl.css');
         if (cancelled) return;
+
+        // Must be set before the first Map is constructed.
+        maplibre.setWorkerUrl(maplibreWorkerUrl);
 
         const map = new maplibre.Map({
           container: host,

@@ -377,6 +377,26 @@ function Calendar() {
 
   return (
     <>
+      {/* Set only for the hosted preview build, so a viewer landing on the
+          link is never left thinking this is the live Code Collective site. */}
+      {import.meta.env.VITE_DEMO_NOTE === '1' && (
+        <p
+          className="t-caption px-4 py-2 text-center"
+          style={{ background: 'var(--surface-2)', color: 'var(--ink-2)' }}
+        >
+          Unofficial redesign concept. The live calendar is at{' '}
+          <a
+            href="https://codecollective.us/calendar?city=baltimore"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--accent)', textDecoration: 'underline' }}
+          >
+            codecollective.us
+          </a>
+          .
+        </p>
+      )}
+
       <Header
         condensed={condensed}
         docked={condensed ? pill : undefined}
