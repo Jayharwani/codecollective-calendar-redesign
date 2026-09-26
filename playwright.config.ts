@@ -6,10 +6,15 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests/e2e',
-  // Generous, because the suite loads 1,600+ events and a WebGL map on
-  // whatever machine it happens to run on.
-  timeout: 120_000,
-  expect: { timeout: 20_000 },
+  /**
+   * Generous on purpose. A full axe pass over this page is expensive, because
+   * colour-contrast resolves a background for every text node across 1,600+
+   * events, and the suite has to survive running on a machine that is doing
+   * other things. On an idle machine these tests take 10 to 20 seconds each;
+   * on a loaded one the same scans measured three to four minutes.
+   */
+  timeout: 300_000,
+  expect: { timeout: 30_000 },
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],

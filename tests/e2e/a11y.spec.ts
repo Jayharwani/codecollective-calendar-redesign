@@ -3,27 +3,54 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Zero serious or critical axe violations across the agenda, the month grid,
- * the open detail sheet and the open filters sheet, in both themes.
+ * the open detail sheet, the open filters sheet and the map, in both themes.
+ *
+ * Two things keep this affordable.
+ *
+ * `content-visibility: auto` on the day sections is a real rendering win worth
+ * keeping, but axe queries geometry for every element and each query forces
+ * layout on a skipped subtree. Measured on this suite, one scan took 201s with
+ * it and 70s without. It is neutralised for the scan only, which changes no
+ * markup, no roles and no colours.
+ *
+ * And each scan is scoped to the surface under test. The agenda scan already
+ * covers the chrome and the rows; re-walking all of it behind an open sheet
+ * adds no signal and costs minutes, because colour-contrast has to resolve a
+ * background for every text node.
  */
 const SERIOUS = new Set(['serious', 'critical']);
 
-/**
- * `content-visibility: auto` on the day sections is a real rendering win, but
- * axe queries geometry for every element and each query forces layout on a
- * skipped subtree. Measured on this suite, leaving it on made a single scan
- * take 201s instead of 70s. Neutralising it for the scan changes no markup,
- * no roles and no colours — only whether the browser is allowed to skip
- * rendering work — so the scan still sees exactly what assistive technology
- * would.
- */
-async function scan(page: Page, label: string) {
+type ScanOptions = {
+  /** Restrict the scan to this selector. Defaults to the whole document. */
+  include?: string;
+  /** Cap how many of the repeated day sections are walked. */
+  maxDays?: number;
+};
+
+async function scan(page: Page, label: string, options: ScanOptions = {}) {
   await page.addStyleTag({ content: '.day-section { content-visibility: visible !important; }' });
 
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-    .analyze();
+  const builder = new AxeBuilder({ page }).withTags([
+    'wcag2a',
+    'wcag2aa',
+    'wcag21a',
+    'wcag21aa',
+    'wcag22aa',
+  ]);
 
+  if (options.include) builder.include(options.include);
+
+  if (options.maxDays !== undefined) {
+    // Every day section is the same component with different text in it.
+    const days = await page.locator('[data-day]').count();
+    for (let i = options.maxDays; i < days; i++) {
+      builder.exclude(`[data-day]:nth-of-type(${i + 1})`);
+    }
+  }
+
+  const results = await builder.analyze();
   const bad = results.violations.filter((v) => SERIOUS.has(v.impact ?? ''));
+
   if (bad.length > 0) {
     const detail = bad
       .map(
@@ -40,8 +67,7 @@ async function scan(page: Page, label: string) {
 }
 
 async function ready(page: Page) {
-  // The agenda is the last thing to render, and it needs the live feed.
-  await expect(page.locator('[data-day]').first()).toBeVisible({ timeout: 45_000 });
+  await expect(page.locator('[data-day]').first()).toBeVisible({ timeout: 60_000 });
 }
 
 async function setTheme(page: Page, theme: 'light' | 'dark') {
@@ -56,12 +82,12 @@ for (const theme of ['light', 'dark'] as const) {
       await page.goto('/?city=baltimore&map=0');
       await ready(page);
       await setTheme(page, theme);
-      await scan(page, `agenda (${theme})`);
+      await scan(page, `agenda (${theme})`, { maxDays: 2 });
     });
 
     test('month view', async ({ page }) => {
       await page.goto('/?city=baltimore&map=0&view=month');
-      await expect(page.getByRole('grid')).toBeVisible({ timeout: 45_000 });
+      await expect(page.getByRole('grid')).toBeVisible({ timeout: 60_000 });
       await setTheme(page, theme);
       await scan(page, `month (${theme})`);
     });
@@ -71,8 +97,10 @@ for (const theme of ['light', 'dark'] as const) {
       await ready(page);
       await setTheme(page, theme);
       await page.locator('[data-event-key]').first().click();
-      await expect(page.getByRole('dialog')).toBeVisible();
-      await scan(page, `event sheet (${theme})`);
+      // The sheet is a lazy chunk, so allow for a slow fetch and parse.
+      await expect(page.getByRole('dialog')).toBeVisible({ timeout: 60_000 });
+      // The agenda behind it is covered by the agenda test.
+      await scan(page, `event sheet (${theme})`, { include: '[role="dialog"]' });
     });
 
     test('filters sheet', async ({ page }) => {
@@ -80,16 +108,24 @@ for (const theme of ['light', 'dark'] as const) {
       await ready(page);
       await setTheme(page, theme);
       await page.getByRole('button', { name: 'Filters' }).click();
-      await expect(page.getByRole('dialog')).toBeVisible();
-      await scan(page, `filters (${theme})`);
+      await expect(page.getByRole('dialog')).toBeVisible({ timeout: 60_000 });
+      await scan(page, `filters (${theme})`, { include: '[role="dialog"]' });
     });
   });
 }
 
 test('map view', async ({ page }) => {
-  // Below 1280 the map replaces the list, so there are no day sections to
-  // wait for; the canvas is the readiness signal either way.
+  // Below 1280 the map replaces the list, so there are no day sections to wait
+  // for; the canvas is the readiness signal either way.
   await page.goto('/?city=baltimore&map=1');
-  await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 45_000 });
-  await scan(page, 'map');
+  await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 60_000 });
+  await scan(page, 'map', { include: 'aside[aria-label="Map of events"]' });
+});
+
+test('the page chrome, with no agenda behind it', async ({ page }) => {
+  // An empty result leaves only the header, search pill, sector rail, tide
+  // line and footer, so this scans all of them with nothing else in the way.
+  await page.goto('/?city=baltimore&map=0&q=zzzzqqqnothing');
+  await expect(page.getByText(/No events match/)).toBeVisible({ timeout: 60_000 });
+  await scan(page, 'chrome');
 });
