@@ -153,8 +153,16 @@ export function SectorRail({
         <button
           type="button"
           onClick={onOpenFilters}
-          className="t-meta relative flex items-center gap-2 rounded-[var(--r-pill)] border px-3 py-2"
-          style={{ borderColor: 'var(--line)', background: 'var(--surface)', color: 'var(--ink)', minHeight: 44 }}
+          // The word is hidden on narrow screens; the name must not be.
+          aria-label={filterCount > 0 ? `Filters, ${filterCount} active` : 'Filters'}
+          className="t-meta relative flex items-center justify-center gap-2 rounded-[var(--r-pill)] border px-3 py-2"
+          style={{
+            borderColor: 'var(--line)',
+            background: 'var(--surface)',
+            color: 'var(--ink)',
+            minWidth: 44,
+            minHeight: 44,
+          }}
         >
           <SlidersHorizontal size={16} strokeWidth={1.5} aria-hidden />
           <span className="hidden sm:inline">Filters</span>

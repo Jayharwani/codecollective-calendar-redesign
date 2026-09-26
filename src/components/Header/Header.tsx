@@ -1,5 +1,5 @@
-import { CalendarPlus } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { CalendarPlus, Menu as MenuIcon } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 
 const NAV = [
   { label: 'Home', href: 'https://codecollective.us/' },
@@ -21,6 +21,8 @@ export type HeaderProps = {
  * dense agenda underneath never has to compete with a frosted panel.
  */
 export function Header({ condensed, docked, onSubscribe }: HeaderProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <header
       className="sticky top-0 z-40 w-full"
@@ -66,8 +68,17 @@ export function Header({ condensed, docked, onSubscribe }: HeaderProps) {
           <button
             type="button"
             onClick={onSubscribe}
-            className="t-meta flex items-center gap-2 rounded-[var(--r-pill)] border px-3 py-2"
-            style={{ borderColor: 'var(--line)', background: 'var(--surface)', color: 'var(--ink)' }}
+            // The label is hidden on narrow screens, so the name has to be
+            // carried explicitly or the button has none at all.
+            aria-label="Subscribe"
+            className="t-meta flex items-center justify-center gap-2 rounded-[var(--r-pill)] border px-3 py-2"
+            style={{
+              borderColor: 'var(--line)',
+              background: 'var(--surface)',
+              color: 'var(--ink)',
+              minWidth: 44,
+              minHeight: 44,
+            }}
           >
             <CalendarPlus size={16} strokeWidth={1.5} aria-hidden />
             <span className="hidden sm:inline">Subscribe</span>
@@ -79,8 +90,54 @@ export function Header({ condensed, docked, onSubscribe }: HeaderProps) {
           >
             Log in
           </a>
+
+          {/* On phones the nav collapses into a disclosure rather than vanishing. */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
+            aria-label="Menu"
+            className="flex items-center justify-center rounded-[var(--r-pill)] border md:hidden"
+            style={{ borderColor: 'var(--line)', color: 'var(--ink)', minWidth: 44, minHeight: 44 }}
+          >
+            <MenuIcon size={18} strokeWidth={1.5} aria-hidden />
+          </button>
         </div>
       </div>
+
+      {menuOpen && (
+        <nav
+          id="mobile-nav"
+          aria-label="Main"
+          className="border-t md:hidden"
+          style={{ borderColor: 'var(--line)', background: 'var(--surface)' }}
+        >
+          <ul className="m-0 list-none p-2">
+            {NAV.map((item) => (
+              <li key={item.label}>
+                <a
+                  href={item.href}
+                  aria-current={item.current ? 'page' : undefined}
+                  className="t-body block rounded-[var(--r-cell)] px-3 py-3"
+                  style={{ color: item.current ? 'var(--ink)' : 'var(--ink-2)', minHeight: 44 }}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))}
+            <li>
+              <a
+                href="https://codecollective.us/p/"
+                className="t-body block rounded-[var(--r-cell)] px-3 py-3"
+                style={{ color: 'var(--ink-2)', minHeight: 44 }}
+              >
+                Log in
+              </a>
+            </li>
+          </ul>
+        </nav>
+      )}
 
       {/* On desktop the pill docks in a second row so the nav keeps its place. */}
       {docked && <div className="mx-auto hidden w-full max-w-[1440px] px-6 pb-3 md:block">{docked}</div>}

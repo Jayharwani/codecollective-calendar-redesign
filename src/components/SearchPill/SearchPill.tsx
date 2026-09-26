@@ -5,6 +5,8 @@ import { segmentClass, whenLabel } from './pillShared';
 
 const PillSegments = lazy(() => import('./PillSegments'));
 
+const PhoneSearch = lazy(() => import('./PhoneSearch'));
+
 export type SearchPillProps = {
   city: CityId;
   cityLabel: string;
@@ -15,6 +17,10 @@ export type SearchPillProps = {
   onCity: (city: CityId) => void;
   onWhen: (preset: DatePreset, from?: string | null, to?: string | null) => void;
   onQuery: (q: string) => void;
+  /** Phones collapse the three segments into one button and a sheet. */
+  isPhone: boolean;
+  resultCount: number;
+  onClearAll: () => void;
 };
 
 /**
@@ -31,10 +37,14 @@ export function SearchPill({
   onCity,
   onWhen,
   onQuery,
+  isPhone,
+  resultCount,
+  onClearAll,
 }: SearchPillProps) {
   const [text, setText] = useState(query);
   const [segmentsReady, setSegmentsReady] = useState(false);
   const [pending, setPending] = useState<'where' | 'when' | null>(null);
+  const [phoneOpen, setPhoneOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const searchId = useId();
 
@@ -59,11 +69,12 @@ export function SearchPill({
       const tag = t?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t?.isContentEditable) return;
       e.preventDefault();
-      inputRef.current?.focus();
+      if (isPhone) setPhoneOpen(true);
+      else inputRef.current?.focus();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [isPhone]);
 
   // Swap the real popovers in once the page is idle, so the first click is
   // instant without the chunk sitting on the critical path.
@@ -119,6 +130,47 @@ export function SearchPill({
       </button>
     </>
   );
+
+  if (isPhone) {
+    const active = query.trim() !== '';
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setPhoneOpen(true)}
+          className="flex w-full items-center gap-3 rounded-[var(--r-pill)] px-4"
+          style={{ background: 'var(--surface)', boxShadow: 'var(--shadow-pill)', minHeight: 48 }}
+        >
+          <Search size={18} strokeWidth={1.5} aria-hidden style={{ color: 'var(--ink-2)' }} />
+          <span
+            className="t-meta truncate"
+            style={{ color: active ? 'var(--ink)' : 'var(--ink-2)' }}
+          >
+            {active ? query : `Search ${cityLabel} events`}
+          </span>
+        </button>
+        <Suspense fallback={null}>
+          {phoneOpen && (
+            <PhoneSearch
+              open={phoneOpen}
+              onOpenChange={setPhoneOpen}
+              city={city}
+              cityLabel={cityLabel}
+              datePreset={datePreset}
+              from={from}
+              to={to}
+              query={query}
+              resultCount={resultCount}
+              onCity={onCity}
+              onWhen={onWhen}
+              onQuery={onQuery}
+              onClearAll={onClearAll}
+            />
+          )}
+        </Suspense>
+      </>
+    );
+  }
 
   return (
     <div

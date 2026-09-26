@@ -311,7 +311,27 @@ function Calendar() {
       onCity={actions.setCity}
       onWhen={onWhen}
       onQuery={actions.setQuery}
+      isPhone={isPhone}
+      resultCount={derived.filtered.length}
+      onClearAll={actions.clearAll}
     />
+  );
+
+  const mapPanel = (
+    <MapPanel
+      events={derived.mappable}
+      unmappedCount={derived.unmappedCount}
+      center={getCity(url.city).center}
+      tz={cal.tz}
+      selectedKey={url.eventKey}
+      hoveredKey={hoveredKey}
+      dark={dark}
+      onSelect={onSelectFromMap}
+    />
+  );
+
+  const mapFallback = (
+    <div className="h-full rounded-[var(--r-sheet)]" style={{ background: 'var(--surface-2)' }} />
   );
 
   const listColumn = (
@@ -449,46 +469,31 @@ function Calendar() {
       </div>
 
       <main id="main" className="mx-auto w-full max-w-[1440px] pb-24" aria-label={`${cal.cityLabel} events`}>
-        {mapOn && !isPhone ? (
-          <div className="flex gap-4 px-0 xl:px-4">
-            <div className="min-w-0 flex-1 xl:max-w-[720px] xl:min-w-[560px]">{listColumn}</div>
+        {mapOn && isWide ? (
+          /* 1280 and up: list and map side by side. */
+          <div className="flex gap-4 px-4">
+            <div className="min-w-[560px] max-w-[720px] flex-1">{listColumn}</div>
             <aside
               aria-label="Map of events"
-              className="sticky hidden xl:block"
+              className="sticky block"
               style={{
                 top: 'calc(var(--chrome-h) + 16px)',
                 height: 'calc(100dvh - var(--chrome-h) - 32px)',
                 flex: 1,
               }}
             >
-              <Suspense fallback={<div className="h-full rounded-[var(--r-sheet)]" style={{ background: 'var(--surface-2)' }} />}>
-                <MapPanel
-                  events={derived.mappable}
-                  unmappedCount={derived.unmappedCount}
-                  center={getCity(url.city).center}
-                  tz={cal.tz}
-                  selectedKey={url.eventKey}
-                  hoveredKey={hoveredKey}
-                  dark={dark}
-                  onSelect={onSelectFromMap}
-                />
-              </Suspense>
+              <Suspense fallback={mapFallback}>{mapPanel}</Suspense>
             </aside>
           </div>
-        ) : mapOn && isPhone ? (
-          <div className="px-2" style={{ height: 'calc(100dvh - var(--chrome-h) - 16px)' }}>
-            <Suspense fallback={<div className="h-full rounded-[var(--r-sheet)]" style={{ background: 'var(--surface-2)' }} />}>
-              <MapPanel
-                events={derived.mappable}
-                unmappedCount={derived.unmappedCount}
-                center={getCity(url.city).center}
-                tz={cal.tz}
-                selectedKey={url.eventKey}
-                hoveredKey={hoveredKey}
-                dark={dark}
-                onSelect={onSelectFromMap}
-              />
-            </Suspense>
+        ) : mapOn ? (
+          /* Below 1280 the map replaces the list rather than squeezing it. */
+          <div
+            className="px-2 sm:px-4"
+            style={{ height: 'calc(100dvh - var(--chrome-h) - 24px)' }}
+          >
+            <aside aria-label="Map of events" className="h-full">
+              <Suspense fallback={mapFallback}>{mapPanel}</Suspense>
+            </aside>
           </div>
         ) : (
           listColumn

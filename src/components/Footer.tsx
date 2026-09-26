@@ -29,7 +29,11 @@ export function Footer({ organizers }: { organizers: number }) {
           <span className="t-meta font-semibold" style={{ color: 'var(--ink)' }}>
             Code Collective
           </span>
-          <a href="mailto:julian@codecollective.us" className="t-meta" style={{ color: 'var(--ink-2)' }}>
+          <a
+            href="mailto:julian@codecollective.us"
+            className="t-meta inline-flex items-center"
+            style={{ color: 'var(--ink-2)', minHeight: 24 }}
+          >
             Contact
           </a>
           <span className="t-meta tnum" style={{ color: 'var(--ink-2)' }}>
@@ -39,8 +43,8 @@ export function Footer({ organizers }: { organizers: number }) {
             href="https://github.com/juliancoy/CodeCollective"
             target="_blank"
             rel="noopener noreferrer"
-            className="t-meta"
-            style={{ color: 'var(--ink-2)' }}
+            className="t-meta inline-flex items-center"
+            style={{ color: 'var(--ink-2)', minHeight: 24 }}
           >
             GitHub
           </a>

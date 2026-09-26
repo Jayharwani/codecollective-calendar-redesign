@@ -66,7 +66,7 @@ function TimeGroup({ group, ...rest }: { group: TimeGroupModel } & RowListProps)
           />
         )}
         <span style={isLive ? { color: 'var(--live)' } : undefined}>{group.label}</span>
-        <span className="tnum" style={{ opacity: 0.75 }}>
+        <span className="tnum" style={{ color: 'var(--ink-2)' }}>
           {group.events.length}
         </span>
       </h3>

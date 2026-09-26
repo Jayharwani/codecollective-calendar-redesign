@@ -3,68 +3,73 @@
 
 /* ---------- Reset and base ---------- */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/* Layered so Tailwind's utilities win. An unlayered `button { padding: 0 }`
+   silently beats every `px-*` class, which collapsed the padding on every
+   button in the app. */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-html {
-  /* Anchors and focused elements must never land under the sticky chrome. */
-  scroll-padding-top: var(--chrome-h);
-  -webkit-text-size-adjust: 100%;
-}
+  html {
+    /* Anchors and focused elements must never land under the sticky chrome. */
+    scroll-padding-top: var(--chrome-h);
+    -webkit-text-size-adjust: 100%;
+  }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
 
-h1,
-h2,
-h3,
-h4,
-p,
-figure {
-  margin: 0;
-}
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  figure {
+    margin: 0;
+  }
 
-button {
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-}
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-img {
-  display: block;
-  max-width: 100%;
-}
+  img {
+    display: block;
+    max-width: 100%;
+  }
 
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
-}
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
 
-/* Every date, time and count uses tabular figures so columns never jitter. */
-time,
-.tnum {
-  font-variant-numeric: tabular-nums;
+  /* Every date, time and count uses tabular figures so columns never jitter. */
+  time,
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 /* ---------- Focus ---------- */

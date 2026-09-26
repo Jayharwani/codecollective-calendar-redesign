@@ -54,6 +54,12 @@ export function MonthGrid({ events, tz, todayKey, onPickDay }: MonthGridProps) {
     [start],
   );
 
+  /** Four rows of seven, so the grid can carry real `role="row"` children. */
+  const weeks = useMemo(
+    () => Array.from({ length: 4 }, (_, w) => cells.slice(w * 7, w * 7 + 7)),
+    [cells],
+  );
+
   const rangeLabel = useMemo(() => {
     const fmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, month: 'long', year: 'numeric' });
     const a = fmt.format(startOfDayKey(start, tz));
@@ -138,78 +144,99 @@ export function MonthGrid({ events, tz, todayKey, onPickDay }: MonthGridProps) {
         onKeyDown={onKeyDown}
         className="grid grid-cols-7 gap-1"
       >
-        {WEEKDAYS.map((w) => (
-          <div
-            key={w}
-            role="columnheader"
-            className="t-caption pb-1 text-center"
-            style={{ color: 'var(--ink-2)' }}
-          >
-            {w}
+        {/* role="grid" requires its cells to sit inside rows. `display: contents`
+            supplies the rows to the accessibility tree without disturbing the
+            CSS grid the cells are laid out on. */}
+        <div role="row" style={{ display: 'contents' }}>
+          {WEEKDAYS.map((w) => (
+            <div
+              key={w}
+              role="columnheader"
+              className="t-caption pb-1 text-center"
+              style={{ color: 'var(--ink-2)' }}
+            >
+              {w}
+            </div>
+          ))}
+        </div>
+
+        {weeks.map((week, wi) => (
+          <div role="row" key={week[0] ?? wi} style={{ display: 'contents' }}>
+            {week.map((dayKey) => {
+              const cell = model.get(dayKey);
+              const count = cell?.count ?? 0;
+              const isToday = dayKey === todayKey;
+              const isPast = dayKey < todayKey;
+
+              return (
+                <button
+                  key={dayKey}
+                  type="button"
+                  role="gridcell"
+                  data-cell={dayKey}
+                  tabIndex={dayKey === focusKey ? 0 : -1}
+                  aria-label={`${formatLongDay(dayKey, tz)}, ${
+                    count === 1 ? '1 event' : `${count} events`
+                  }`}
+                  aria-current={isToday ? 'date' : undefined}
+                  aria-disabled={isPast ? true : undefined}
+                  onClick={() => onPickDay(dayKey)}
+                  onFocus={() => setFocusKey(dayKey)}
+                  className="flex min-h-[104px] flex-col items-stretch gap-1 rounded-[var(--r-cell)] p-2 text-left"
+                  style={{
+                    // A past day is muted with ink rather than opacity: fading
+                    // the whole cell took the numeral under 4.5:1.
+                    background: isPast ? 'var(--surface-2)' : heatFor(count, max),
+                    boxShadow: isToday ? 'inset 0 0 0 2px var(--accent)' : undefined,
+                  }}
+                >
+                  <span className="flex items-baseline justify-between gap-1">
+                    <span
+                      className="t-tide-num"
+                      style={{
+                        // Today is marked by the accent ring and aria-current,
+                        // not accent ink: on the darkest heat step the accent
+                        // only reaches 4.1:1 against the cell.
+                        color: isPast ? 'var(--ink-2)' : 'var(--ink)',
+                      }}
+                    >
+                      {Number(dayKey.slice(8, 10))}
+                    </span>
+                    {/* --ink, not --ink-2: on the darkest heat step the muted
+                        ink drops to 3.7:1. */}
+                    <span className="t-caption tnum" style={{ color: 'var(--ink)' }}>
+                      {count > 0 ? count : ''}
+                    </span>
+                  </span>
+
+                  {!isPast && cell && cell.sectors.length > 0 && (
+                    <span aria-hidden className="flex gap-1">
+                      {cell.sectors.map((s) => (
+                        <span
+                          key={s}
+                          className="h-[6px] w-[6px] rounded-full"
+                          style={{ background: `var(--sector-${s})` }}
+                        />
+                      ))}
+                    </span>
+                  )}
+
+                  {!isPast &&
+                    cell?.titles.map((t) => (
+                      <span
+                        key={t}
+                        aria-hidden
+                        className="t-caption clamp-1"
+                        style={{ color: 'var(--ink)' }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                </button>
+              );
+            })}
           </div>
         ))}
-
-        {cells.map((dayKey) => {
-          const cell = model.get(dayKey);
-          const count = cell?.count ?? 0;
-          const isToday = dayKey === todayKey;
-          const isPast = dayKey < todayKey;
-
-          return (
-            <button
-              key={dayKey}
-              type="button"
-              role="gridcell"
-              data-cell={dayKey}
-              tabIndex={dayKey === focusKey ? 0 : -1}
-              aria-label={`${formatLongDay(dayKey, tz)}, ${count === 1 ? '1 event' : `${count} events`}`}
-              aria-current={isToday ? 'date' : undefined}
-              onClick={() => onPickDay(dayKey)}
-              onFocus={() => setFocusKey(dayKey)}
-              className="flex min-h-[104px] flex-col items-stretch gap-1 rounded-[var(--r-cell)] p-2 text-left"
-              style={{
-                background: heatFor(count, max),
-                opacity: isPast ? 0.5 : 1,
-                border: `1px solid ${isToday ? 'var(--accent)' : 'transparent'}`,
-              }}
-            >
-              <span className="flex items-baseline justify-between gap-1">
-                <span
-                  className="t-tide-num"
-                  style={{ color: isToday ? 'var(--accent)' : 'var(--ink)' }}
-                >
-                  {Number(dayKey.slice(8, 10))}
-                </span>
-                <span className="t-caption tnum" style={{ color: 'var(--ink-2)' }}>
-                  {count > 0 ? count : ''}
-                </span>
-              </span>
-
-              {cell && cell.sectors.length > 0 && (
-                <span aria-hidden className="flex gap-1">
-                  {cell.sectors.map((s) => (
-                    <span
-                      key={s}
-                      className="h-[6px] w-[6px] rounded-full"
-                      style={{ background: `var(--sector-${s})` }}
-                    />
-                  ))}
-                </span>
-              )}
-
-              {cell?.titles.map((t) => (
-                <span
-                  key={t}
-                  aria-hidden
-                  className="t-caption clamp-1"
-                  style={{ color: 'var(--ink-2)' }}
-                >
-                  {t}
-                </span>
-              ))}
-            </button>
-          );
-        })}
       </div>
     </div>
   );

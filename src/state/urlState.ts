@@ -1,6 +1,5 @@
 import {
   createParser,
-  parseAsBoolean,
   parseAsInteger,
   parseAsString,
   parseAsStringLiteral,
@@ -94,6 +93,24 @@ const parseAsClock = createParser({
   },
 });
 
+/**
+ * The URL contract spells these flags `1` and `0`, both for the new `map`
+ * parameter and for the site's existing `lw`. nuqs's `parseAsBoolean` only
+ * recognises the literal strings "true" and "false", so `map=1` parsed as
+ * `false` and switched the map off instead of on.
+ */
+const parseAsFlag = createParser({
+  parse(value: string): boolean | null {
+    const v = value.trim().toLowerCase();
+    if (v === '1' || v === 'true' || v === 'yes') return true;
+    if (v === '0' || v === 'false' || v === 'no') return false;
+    return null;
+  },
+  serialize(value: boolean): string {
+    return value ? '1' : '0';
+  },
+});
+
 const parseAsCity = createParser({
   parse(value: string): CityId | null {
     return isCityId(value) ? value : null;
@@ -138,11 +155,11 @@ const PARSERS = {
   tod: parseAsTimesOfDay.withDefault([]),
   start: parseAsClock,
   end: parseAsClock,
-  lw: parseAsBoolean.withDefault(false),
+  lw: parseAsFlag.withDefault(false),
   near: parseAsString,
   radius: parseAsInteger.withDefault(10),
   view: parseAsView.withDefault('agenda'),
-  map: parseAsBoolean,
+  map: parseAsFlag,
   event: parseAsString,
   day: parseAsDayKey,
   tz: parseAsString,
