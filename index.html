@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Baltimore Techonomics Calendar, Code Collective</title>
+    <meta
+      name="description"
+      content="Every upcoming technology, community and civic event in Baltimore, as a time-first agenda you can scan in seconds."
+    />
+    <meta name="theme-color" content="#F5F7F9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0E1A24" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content="Baltimore Techonomics Calendar" />
+    <meta
+      property="og:description"
+      content="Every upcoming technology, community and civic event in Baltimore, as a time-first agenda."
+    />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://codecollective.us" crossorigin />
+    <script>
+      // Resolve the theme before first paint so there is no flash of the wrong
+      // surface. Mirrors the logic in src/app/theme.ts.
+      try {
+        var t = localStorage.getItem('cc-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+      } catch (e) {
+        /* storage blocked; fall back to prefers-color-scheme */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
