@@ -2,33 +2,35 @@ export type ThemeChoice = 'system' | 'light' | 'dark';
 
 const KEY = 'cc-theme';
 
-/** What the visitor last chose. Storage can throw in private mode. */
+/**
+ * v2 defaults to light: on white the brand band carries the depth and event
+ * photography reads properly. `data-theme` is always one of the three values,
+ * so the stylesheet can key the system branch off `[data-theme='system']`
+ * rather than the absence of an attribute.
+ */
 export function readTheme(): ThemeChoice {
   try {
     const v = localStorage.getItem(KEY);
-    if (v === 'light' || v === 'dark') return v;
+    if (v === 'light' || v === 'dark' || v === 'system') return v;
   } catch {
-    /* blocked storage falls back to the system preference */
+    /* blocked storage falls back to the light default */
   }
-  return 'system';
+  return 'light';
 }
 
 export function applyTheme(choice: ThemeChoice): void {
-  const root = document.documentElement;
-  if (choice === 'system') delete root.dataset.theme;
-  else root.dataset.theme = choice;
+  document.documentElement.dataset.theme = choice;
   try {
-    if (choice === 'system') localStorage.removeItem(KEY);
-    else localStorage.setItem(KEY, choice);
+    localStorage.setItem(KEY, choice);
   } catch {
-    /* the class on <html> is enough for this session */
+    /* the attribute on <html> is enough for this session */
   }
 }
 
 /** True when the page is currently painting the dark surfaces. */
 export function isDarkNow(): boolean {
-  const explicit = document.documentElement.dataset.theme;
-  if (explicit === 'dark') return true;
-  if (explicit === 'light') return false;
+  const choice = document.documentElement.dataset.theme;
+  if (choice === 'dark') return true;
+  if (choice === 'light') return false;
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }

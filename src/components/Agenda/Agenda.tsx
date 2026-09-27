@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { DaySectionModel } from '../../data/pipeline';
+import { useMediaQuery } from '../../app/layoutHooks';
 import { DaySection } from './DaySection';
 
 /** How many day sections the sentinel adds each time it comes into view. */
@@ -27,6 +28,11 @@ export type AgendaProps = {
    * to the first batch once a minute.
    */
   resetToken: string;
+  /**
+   * Slotted in after today's section, so today's events stay above the fold
+   * and the interlude reads as a break in the list rather than a banner.
+   */
+  interlude?: ReactNode;
 };
 
 /**
@@ -45,7 +51,9 @@ export function Agenda({
   onHover,
   onVisibleDayChange,
   resetToken,
+  interlude,
 }: AgendaProps) {
+  const isPhone = useMediaQuery('(max-width: 767px)');
   const [limit, setLimit] = useState(FIRST_BATCH);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -98,17 +106,23 @@ export function Agenda({
 
   return (
     <div ref={rootRef}>
-      {shown.map((day) => (
-        <DaySection
-          key={day.dayKey}
-          day={day}
-          tz={tz}
-          todayKey={todayKey}
-          selectedKey={selectedKey}
-          flashKey={flashKey}
-          onOpen={onOpen}
-          onHover={onHover}
-        />
+      {shown.map((day, i) => (
+        <div key={day.dayKey}>
+          <DaySection
+            day={day}
+            tz={tz}
+            todayKey={todayKey}
+            selectedKey={selectedKey}
+            flashKey={flashKey}
+            onOpen={onOpen}
+            onHover={onHover}
+            isPhone={isPhone}
+          />
+          {/* After today, or after the first day when today has nothing on. */}
+          {interlude && (day.dayKey === todayKey || (i === 0 && day.dayKey > todayKey))
+            ? interlude
+            : null}
+        </div>
       ))}
 
       {limit < days.length && (

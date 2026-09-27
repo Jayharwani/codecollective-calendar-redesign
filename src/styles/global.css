@@ -75,7 +75,7 @@
 /* ---------- Focus ---------- */
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -105,7 +105,7 @@
   top: -100px;
   z-index: 100;
   padding: var(--s2) var(--s4);
-  background: var(--surface);
+  background: var(--bg);
   color: var(--ink);
   border-radius: var(--r-cell);
   box-shadow: var(--shadow-sheet);
@@ -146,25 +146,115 @@
   mask-image: linear-gradient(
     to right,
     transparent 0,
-    #000 20px,
-    #000 calc(100% - 28px),
+    #000 24px,
+    #000 calc(100% - 24px),
     transparent 100%
   );
 }
 
-/* ---------- Type roles, section 8.3 ---------- */
+/* ---------- Type roles, v2 ----------
+   One weight-600 element per zone. Everything else is 400 or 500, so the
+   single bold thing in each block is the thing that leads. */
 
-.t-display {
+.t-h1 {
   font-size: 30px;
   line-height: 34px;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 @media (min-width: 768px) {
-  .t-display {
-    font-size: 40px;
-    line-height: 44px;
+  .t-h1 {
+    font-size: 44px;
+    line-height: 48px;
   }
+}
+
+.t-band-meta {
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 400;
+}
+
+/* The loud element in the list column. */
+.t-gutter-num {
+  font-size: 32px;
+  line-height: 32px;
+  font-weight: 600;
+  font-stretch: 75%;
+  font-variant-numeric: tabular-nums;
+}
+.t-gutter-day {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+.t-gutter-rel {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+.t-gutter-count {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+}
+
+.t-row-time {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 500;
+  font-stretch: 85%;
+  font-variant-numeric: tabular-nums;
+}
+.t-row-time-end {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.t-row-title {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+}
+.t-row-meta {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.t-tide-num {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  font-stretch: 75%;
+  font-variant-numeric: tabular-nums;
+}
+.t-tide-day {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  font-stretch: 80%;
+}
+
+.t-rail {
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+}
+.t-rail-active {
+  font-weight: 600;
+}
+
+.t-section {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.t-group {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
 }
 
 .t-sheet-title {
@@ -172,60 +262,26 @@
   line-height: 30px;
   font-weight: 600;
 }
-
 .t-day {
   font-size: 20px;
   line-height: 28px;
   font-weight: 600;
 }
-
-.t-tide-num {
-  font-size: 20px;
-  line-height: 24px;
-  font-weight: 600;
-  font-stretch: 75%;
-  font-variant-numeric: tabular-nums;
-}
-
-.t-tide-day {
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
-  font-stretch: 80%;
-}
-
-.t-row-title {
-  font-size: 17px;
-  line-height: 24px;
-  font-weight: 600;
-}
-
-.t-row-time {
-  font-size: 15px;
-  line-height: 20px;
-  font-weight: 600;
-  font-stretch: 85%;
-  font-variant-numeric: tabular-nums;
-}
-
 .t-body {
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
 }
-
 .t-meta {
   font-size: 14px;
   line-height: 20px;
   font-weight: 400;
 }
-
 .t-caption {
   font-size: 12px;
   line-height: 16px;
   font-weight: 500;
 }
-
 .t-13 {
   font-size: 13px;
   line-height: 18px;
@@ -258,13 +314,13 @@
 }
 
 .skeleton {
-  background: var(--surface-2);
+  background: var(--bg-soft);
   animation: cc-skeleton 1.8s ease-in-out infinite;
 }
 
 @keyframes cc-flash {
   from {
-    background-color: var(--accent-soft);
+    background-color: var(--brand-soft);
   }
   to {
     background-color: transparent;
@@ -336,6 +392,71 @@
   }
 }
 
+/* ---------- Row lift, v2 ---------- */
+
+.row-lift {
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+@media (hover: hover) {
+  .row-lift:hover {
+    background: var(--bg);
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-1px);
+  }
+}
+.row-selected {
+  background: var(--brand-soft);
+}
+
+.where-row {
+  transition: background-color 160ms ease;
+}
+@media (hover: hover) {
+  .where-row:hover {
+    background: color-mix(in srgb, var(--brand) 8%, transparent);
+  }
+}
+
+/* The interlude's one flourish: the image eases inside a fixed frame. */
+.interlude-frame {
+  overflow: hidden;
+}
+.interlude-img {
+  transition: transform 360ms ease;
+}
+@media (hover: hover) {
+  .interlude-card:hover .interlude-img {
+    transform: scale(1.03);
+  }
+  .interlude-card:hover .interlude-frame > span {
+    filter: brightness(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row-lift,
+  .interlude-img,
+  .where-row {
+    transition: none;
+  }
+  .row-lift:hover {
+    transform: none;
+  }
+  .interlude-card:hover .interlude-img {
+    transform: none;
+  }
+}
+
+/* Day sections carry their own spacing now that the header bands are gone. */
+.day-section + .day-section {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+
 /* ---------- Progressive rendering ---------- */
 
 .day-section {
@@ -355,7 +476,7 @@
   margin-top: 0.75em;
 }
 .prose a {
-  color: var(--accent);
+  color: var(--brand);
   text-decoration: underline;
   text-underline-offset: 2px;
 }

@@ -46,8 +46,8 @@ function Chip({
       className="t-meta flex items-center gap-2 rounded-[var(--r-pill)] border px-3 py-2"
       style={{
         minHeight: 44,
-        borderColor: active ? 'var(--accent)' : 'var(--line)',
-        background: active ? 'var(--accent-soft)' : 'var(--surface)',
+        borderColor: active ? 'var(--brand)' : 'var(--line)',
+        background: active ? 'var(--brand-soft)' : 'var(--bg)',
         color: 'var(--ink)',
       }}
     >
@@ -83,6 +83,9 @@ export type FiltersSheetProps = {
   sectorCounts: Map<SectorId, number>;
   /** How many events a candidate filter state would show. */
   countFor: (draft: FilterState) => number;
+  /** Top localities, shown here when the context rail is not on screen. */
+  localityCounts: Array<{ name: string; count: number }>;
+  showWherePanel: boolean;
   onApply: (next: FilterState) => void;
   isPhone: boolean;
 };
@@ -98,6 +101,8 @@ export function FiltersSheet({
   current,
   sectorCounts,
   countFor,
+  localityCounts,
+  showWherePanel,
   onApply,
   isPhone,
 }: FiltersSheetProps) {
@@ -212,7 +217,7 @@ export function FiltersSheet({
               <button
                 type="button"
                 className="t-meta underline"
-                style={{ color: 'var(--accent)', textUnderlineOffset: '2px' }}
+                style={{ color: 'var(--brand-on-bg)', textUnderlineOffset: '2px' }}
                 onClick={() =>
                   draft.lens === 'community_sectors'
                     ? patch({ sectors: [...RAIL_ORDER] })
@@ -326,7 +331,7 @@ export function FiltersSheet({
                 width: 44,
                 height: 26,
                 padding: 3,
-                background: draft.outsideWorkHours ? 'var(--accent)' : 'var(--surface-2)',
+                background: draft.outsideWorkHours ? 'var(--brand)' : 'var(--bg-soft)',
                 border: '1px solid var(--line)',
               }}
             >
@@ -335,7 +340,7 @@ export function FiltersSheet({
                 style={{
                   width: 18,
                   height: 18,
-                  background: draft.outsideWorkHours ? 'var(--accent-ink)' : 'var(--ink-2)',
+                  background: draft.outsideWorkHours ? 'var(--brand-ink)' : 'var(--ink-2)',
                   transform: draft.outsideWorkHours ? 'translateX(18px)' : 'translateX(0)',
                   transition: 'transform 0.16s ease',
                 }}
@@ -351,6 +356,25 @@ export function FiltersSheet({
             </span>
           </label>
         </Section>
+
+        {/* Below 1280 the context rail is gone, so the "where" answer moves
+            here rather than disappearing. */}
+        {showWherePanel && localityCounts.length > 0 && (
+          <Section title="Where it's happening">
+            <div className="flex flex-wrap gap-2">
+              {localityCounts.map((l) => (
+                <Chip
+                  key={l.name}
+                  active={draft.near === l.name}
+                  onClick={() => patch({ near: l.name, radiusMiles: 5 })}
+                  count={l.count}
+                >
+                  {l.name}
+                </Chip>
+              ))}
+            </div>
+          </Section>
+        )}
 
         <Section title="Distance">
           <div className="flex flex-wrap items-end gap-3">
@@ -407,16 +431,16 @@ export function FiltersSheet({
                 <Slider.Control className="flex flex-1 items-center py-3">
                   <Slider.Track
                     className="relative w-full rounded-full"
-                    style={{ height: 4, background: 'var(--surface-2)' }}
+                    style={{ height: 4, background: 'var(--bg-soft)' }}
                   >
-                    <Slider.Indicator className="rounded-full" style={{ background: 'var(--accent)' }} />
+                    <Slider.Indicator className="rounded-full" style={{ background: 'var(--brand-on-bg)' }} />
                     <Slider.Thumb
                       className="rounded-full"
                       style={{
                         width: 20,
                         height: 20,
-                        background: 'var(--surface)',
-                        border: '2px solid var(--accent)',
+                        background: 'var(--bg)',
+                        border: '2px solid var(--brand)',
                       }}
                     />
                   </Slider.Track>
@@ -463,7 +487,7 @@ export function FiltersSheet({
                   name="lens"
                   checked={draft.lens === id}
                   onChange={() => patch({ lens: id, sectors: [], lensCategories: [] })}
-                  style={{ accentColor: 'var(--accent)', width: 18, height: 18 }}
+                  style={{ accentColor: 'var(--brand)', width: 18, height: 18 }}
                 />
                 <span className="t-body" style={{ color: 'var(--ink)' }}>
                   {LENS_LABEL[id]}
@@ -476,7 +500,7 @@ export function FiltersSheet({
 
       <div
         className="flex items-center justify-between gap-3 border-t px-5 py-4"
-        style={{ borderColor: 'var(--line)', background: 'var(--surface)' }}
+        style={{ borderColor: 'var(--line)', background: 'var(--bg)' }}
       >
         <button
           type="button"
@@ -495,8 +519,8 @@ export function FiltersSheet({
           }}
           className="t-meta tnum rounded-[var(--r-pill)] px-5 py-2.5"
           style={{
-            background: count === 0 ? 'var(--surface-2)' : 'var(--accent)',
-            color: count === 0 ? 'var(--ink-2)' : 'var(--accent-ink)',
+            background: count === 0 ? 'var(--bg-soft)' : 'var(--brand)',
+            color: count === 0 ? 'var(--ink-2)' : 'var(--brand-ink)',
             minHeight: 44,
             cursor: count === 0 ? 'not-allowed' : 'pointer',
           }}
@@ -520,7 +544,7 @@ export function FiltersSheet({
               bottom: 0,
               zIndex: 71,
               maxHeight: '92dvh',
-              background: 'var(--surface)',
+              background: 'var(--bg)',
               borderTopLeftRadius: 'var(--r-sheet)',
               borderTopRightRadius: 'var(--r-sheet)',
               boxShadow: 'var(--shadow-sheet)',
@@ -550,7 +574,7 @@ export function FiltersSheet({
             zIndex: 71,
             width: 'min(560px, calc(100vw - 32px))',
             maxHeight: 'min(760px, calc(100dvh - 64px))',
-            background: 'var(--surface)',
+            background: 'var(--bg)',
             borderRadius: 'var(--r-sheet)',
             boxShadow: 'var(--shadow-sheet)',
             overflow: 'hidden',

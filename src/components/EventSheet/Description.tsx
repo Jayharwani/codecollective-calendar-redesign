@@ -69,7 +69,7 @@ export function Description({ markdown }: { markdown: string }) {
           type="button"
           onClick={() => setExpanded(true)}
           className="t-meta mt-1"
-          style={{ color: 'var(--accent)' }}
+          style={{ color: 'var(--brand-on-bg)' }}
         >
           Show more
         </button>

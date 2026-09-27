@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SUBGROUP_PREVIEW, type DaySectionModel, type TimeGroupModel } from '../../data/pipeline';
-import { formatDayHeader, formatLongDay } from '../../data/time';
+import { diffDayKeys, formatLongDay, tideLabels } from '../../data/time';
 import { EventRow } from './EventRow';
 
 export type DaySectionProps = {
@@ -11,13 +11,15 @@ export type DaySectionProps = {
   flashKey: string | null;
   onOpen: (key: string) => void;
   onHover: (key: string | null) => void;
+  /** Phones swap the gutter for a compact sticky header row. */
+  isPhone: boolean;
 };
 
 export function countLabel(n: number): string {
   return n === 1 ? '1 event' : `${n} events`;
 }
 
-type RowListProps = Omit<DaySectionProps, 'day' | 'todayKey'>;
+type RowListProps = Omit<DaySectionProps, 'day' | 'todayKey' | 'isPhone'>;
 
 function RowList({
   events,
@@ -28,7 +30,7 @@ function RowList({
   onHover,
 }: RowListProps & { events: DaySectionModel['events'] }) {
   return (
-    <ul className="row-list">
+    <ul className="m-0 list-none p-0">
       {events.map((e) => (
         <EventRow
           key={e.key}
@@ -55,28 +57,26 @@ function TimeGroup({ group, ...rest }: { group: TimeGroupModel } & RowListProps)
   return (
     <div>
       <h3
-        className="t-caption flex items-center gap-2 px-4 pt-4 pb-1"
+        className="t-group flex items-center gap-2 px-3 pt-3 pb-1"
         style={{ color: 'var(--ink-2)' }}
       >
         {isLive && (
           <span
             aria-hidden
             className="live-dot h-2 w-2 rounded-full"
-            style={{ background: 'var(--live)' }}
+            style={{ background: 'var(--gold)' }}
           />
         )}
-        <span style={isLive ? { color: 'var(--live)' } : undefined}>{group.label}</span>
-        <span className="tnum" style={{ color: 'var(--ink-2)' }}>
-          {group.events.length}
-        </span>
+        <span style={isLive ? { color: 'var(--ink)' } : undefined}>{group.label}</span>
+        <span className="tnum">{group.events.length}</span>
       </h3>
       <RowList events={shown} {...rest} />
       {hidden > 0 && (
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="t-meta w-full px-4 py-3 text-left"
-          style={{ color: 'var(--accent)' }}
+          className="t-meta w-full rounded-[var(--r-card)] px-3 py-3 text-left"
+          style={{ color: 'var(--brand-on-bg)' }}
         >
           Show {hidden} more {group.label.toLowerCase()} event{hidden === 1 ? '' : 's'}
         </button>
@@ -85,38 +85,113 @@ function TimeGroup({ group, ...rest }: { group: TimeGroupModel } & RowListProps)
   );
 }
 
-export function DaySection({ day, tz, todayKey, ...rest }: DaySectionProps) {
-  const heading = formatDayHeader(day.dayKey, todayKey, tz);
-  const isRelative = heading === 'Today' || heading === 'Tomorrow';
+/**
+ * v1 gave each day a full-width header band, so a loud horizontal rule cut the
+ * list every few rows. v2 moves the date into a sticky gutter beside its rows:
+ * the day stays legible while you read it, and the list keeps one continuous
+ * column. The gutter numeral is the single weight-600 element in this zone.
+ */
+export function DaySection({ day, tz, todayKey, isPhone, ...rest }: DaySectionProps) {
+  const { weekday, numeral } = tideLabels(day.dayKey, tz);
+  const delta = diffDayKeys(todayKey, day.dayKey);
+  const relative = delta === 0 ? 'Today' : delta === 1 ? 'Tomorrow' : null;
+  const isToday = delta === 0;
+  const fullDate = formatLongDay(day.dayKey, tz);
+
+  const body = day.groups ? (
+    day.groups.map((g) => <TimeGroup key={g.id} group={g} tz={tz} {...rest} />)
+  ) : (
+    <RowList events={day.events} tz={tz} {...rest} />
+  );
+
+  if (isPhone) {
+    return (
+      <section className="day-section" data-day={day.dayKey} aria-labelledby={`h-${day.dayKey}`}>
+        <header
+          className="sticky z-10 flex items-baseline justify-between gap-3 border-b px-3 py-2"
+          style={{
+            top: 'calc(var(--band-h) + var(--control-h) + var(--tide-h))',
+            borderColor: 'var(--line)',
+            background: 'var(--bg)',
+          }}
+        >
+          <h2 id={`h-${day.dayKey}`} className="min-w-0">
+            <span className="sr-only">
+              {fullDate}
+              {relative ? `, ${relative}` : ''}
+            </span>
+            <span aria-hidden className="t-row-title" style={{ color: 'var(--ink)' }}>
+              {weekday} {numeral}
+            </span>
+            {relative && (
+              <span aria-hidden className="t-gutter-rel ml-2" style={{ color: 'var(--ink-2)' }}>
+                {relative}
+              </span>
+            )}
+          </h2>
+          <span className="t-gutter-count tnum shrink-0" style={{ color: 'var(--ink-2)' }}>
+            {countLabel(day.count)}
+          </span>
+        </header>
+        {body}
+      </section>
+    );
+  }
 
   return (
-    <section className="day-section" data-day={day.dayKey} aria-labelledby={`h-${day.dayKey}`}>
-      <header
-        className="sticky z-10 flex items-baseline justify-between gap-3 border-b px-4 py-2"
-        style={{ top: 'var(--chrome-h)', borderColor: 'var(--line)', background: 'var(--bg)' }}
+    <section
+      className="day-section grid grid-cols-[96px_1fr] gap-4"
+      data-day={day.dayKey}
+      aria-labelledby={`h-${day.dayKey}`}
+    >
+      <div
+        className="sticky self-start pt-3"
+        style={{ top: 'calc(var(--band-h) + var(--control-h) + var(--tide-h) + 12px)' }}
       >
-        <h2 id={`h-${day.dayKey}`} className="t-day min-w-0" style={{ color: 'var(--ink)' }}>
-          {heading}
-          {isRelative && (
-            <span className="t-meta ml-2 font-normal" style={{ color: 'var(--ink-2)' }}>
-              {formatLongDay(day.dayKey, tz)}
+        <h2 id={`h-${day.dayKey}`}>
+          <span className="sr-only">
+            {fullDate}
+            {relative ? `, ${relative}` : ''}, {countLabel(day.count)}
+          </span>
+          <span aria-hidden className="t-gutter-day block" style={{ color: 'var(--ink-2)' }}>
+            {weekday}
+          </span>
+          <span aria-hidden className="mt-[2px] block">
+            {isToday ? (
+              /* The one place gold appears in the list: today's coin. */
+              <span
+                className="t-gutter-num flex items-center justify-center rounded-full"
+                style={{
+                  width: 46,
+                  height: 46,
+                  background: 'var(--gold)',
+                  color: 'var(--gold-ink)',
+                }}
+              >
+                {numeral}
+              </span>
+            ) : (
+              <span className="t-gutter-num block" style={{ color: 'var(--gutter-num)' }}>
+                {numeral}
+              </span>
+            )}
+          </span>
+          {relative && (
+            <span aria-hidden className="t-gutter-rel mt-1 block" style={{ color: 'var(--ink-2)' }}>
+              {relative}
             </span>
           )}
+          <span
+            aria-hidden
+            className="t-gutter-count tnum mt-1 block"
+            style={{ color: 'var(--ink-2)' }}
+          >
+            {countLabel(day.count)}
+          </span>
         </h2>
-        <span className="t-meta tnum shrink-0" style={{ color: 'var(--ink-2)' }}>
-          {countLabel(day.count)}
-        </span>
-      </header>
+      </div>
 
-      {day.groups ? (
-        <div className="divide-y" style={{ borderColor: 'var(--line)' }}>
-          {day.groups.map((g) => (
-            <TimeGroup key={g.id} group={g} tz={tz} {...rest} />
-          ))}
-        </div>
-      ) : (
-        <RowList events={day.events} tz={tz} {...rest} />
-      )}
+      <div className="min-w-0">{body}</div>
     </section>
   );
 }

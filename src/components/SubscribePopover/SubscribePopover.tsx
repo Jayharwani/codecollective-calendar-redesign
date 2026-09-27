@@ -43,7 +43,7 @@ export function SubscribePopover({
             transform: 'translate(-50%, -50%)',
             zIndex: 71,
             width: 'min(420px, calc(100vw - 32px))',
-            background: 'var(--surface)',
+            background: 'var(--bg)',
             borderRadius: 'var(--r-sheet)',
             boxShadow: 'var(--shadow-sheet)',
             padding: 20,

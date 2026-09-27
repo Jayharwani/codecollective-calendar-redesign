@@ -24,21 +24,20 @@
     -->
     <style>
       :root {
-        --bg: #f5f7f9;
-        --ink: #1b2733;
-        --ink-2: #586878;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root:not([data-theme='light']) {
-          --bg: #0e1a24;
-          --ink: #e6edf2;
-          --ink-2: #93a4b3;
-        }
+        --bg: #ffffff;
+        --ink: #0c1e36;
+        --band-meta: #b9d7f0;
+        --brand: #002a61;
       }
       :root[data-theme='dark'] {
-        --bg: #0e1a24;
-        --ink: #e6edf2;
-        --ink-2: #93a4b3;
+        --bg: #04162e;
+        --ink: #eaf2fb;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root[data-theme='system'] {
+          --bg: #04162e;
+          --ink: #eaf2fb;
+        }
       }
       html {
         -webkit-text-size-adjust: 100%;
@@ -53,6 +52,16 @@
         line-height: 1.5;
         -webkit-font-smoothing: antialiased;
       }
+      /* The boot block mirrors the brand band, so first paint is already navy. */
+      #boot {
+        background: var(--brand);
+        color: #fff;
+        padding: 72px 16px 28px;
+      }
+      #boot-inner {
+        max-width: 1440px;
+        margin: 0 auto;
+      }
       #boot h1 {
         margin: 0;
         font-size: 30px;
@@ -62,25 +71,30 @@
       }
       #boot p {
         margin: 8px 0 0;
-        font-size: 14px;
-        line-height: 20px;
+        font-size: 15px;
+        line-height: 22px;
+        color: var(--band-meta);
       }
       @media (min-width: 768px) {
         #boot h1 {
-          font-size: 40px;
-          line-height: 44px;
+          font-size: 44px;
+          line-height: 48px;
         }
       }
     </style>
     <script>
       // Resolve the theme before first paint so there is no flash of the wrong
-      // surface. Mirrors the logic in src/app/theme.ts.
-      try {
-        var t = localStorage.getItem('cc-theme');
-        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
-      } catch (e) {
-        /* storage blocked; fall back to prefers-color-scheme */
-      }
+      // surface. v2 defaults to light. Mirrors src/app/theme.ts.
+      (function () {
+        var t = 'light';
+        try {
+          var stored = localStorage.getItem('cc-theme');
+          if (stored === 'light' || stored === 'dark' || stored === 'system') t = stored;
+        } catch (e) {
+          /* storage blocked; the light default stands */
+        }
+        document.documentElement.dataset.theme = t;
+      })();
     </script>
   </head>
   <body>
@@ -92,14 +106,14 @@
       there is no layout shift.
     -->
     <div id="root">
-      <div id="boot" style="max-width: 1440px; margin: 0 auto; padding: 24px 16px 16px">
-        <h1 style="color: var(--ink)">
-          What&rsquo;s on in <span id="boot-city">Baltimore</span>
-        </h1>
-        <p style="color: var(--ink-2)">
-          Loading events from the Code Collective calendar. Times in
-          <span id="boot-zone">Eastern Time</span>.
-        </p>
+      <div id="boot">
+        <div id="boot-inner">
+          <h1>What&rsquo;s on in <span id="boot-city">Baltimore</span></h1>
+          <p>
+            Loading events from the Code Collective calendar. Times in
+            <span id="boot-zone">Eastern Time</span>.
+          </p>
+        </div>
       </div>
     </div>
     <script>

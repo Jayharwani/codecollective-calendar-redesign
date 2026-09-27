@@ -1,5 +1,6 @@
 import {
   buildPredicates,
+  isPristine,
   countByDay,
   countBySector,
   countMappable,
@@ -52,6 +53,12 @@ export type Derived = {
   relaxations: Relaxation[];
   /** The date window in force, for the month grid and the empty copy. */
   dateRange: { from: string; to: string } | null;
+  /** Top localities by filtered count, for "Where it's happening". */
+  localityCounts: Array<{ name: string; count: number }>;
+  /** How many of the filtered events are online rather than in a place. */
+  onlineCount: number;
+  /** True when no filter and no search is narrowing the list. */
+  pristine: boolean;
 };
 
 /**
@@ -166,6 +173,24 @@ export function derive(
 
   const mappable = filtered.filter((e) => e.coords !== null);
 
+  // "Where it's happening" answers the location question when the map cannot,
+  // and adds context when it can.
+  const byLocality = new Map<string, number>();
+  let onlineCount = 0;
+  for (const e of filtered) {
+    if (e.online) {
+      onlineCount++;
+      continue;
+    }
+    const name = e.locality;
+    if (!name) continue;
+    byLocality.set(name, (byLocality.get(name) ?? 0) + 1);
+  }
+  const localityCounts = [...byLocality.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .slice(0, 6);
+
   return {
     filtered,
     days,
@@ -175,6 +200,9 @@ export function derive(
     unmappedCount: filtered.length - mappable.length,
     relaxations: buildRelaxations(events, state, ctx, filtered.length),
     dateRange: resolveDateRange(state, ctx.todayKey, ctx.todayWeekday),
+    localityCounts,
+    onlineCount,
+    pristine: isPristine(state),
   };
 }
 

@@ -186,8 +186,8 @@ export function MonthGrid({ events, tz, todayKey, onPickDay }: MonthGridProps) {
                   style={{
                     // A past day is muted with ink rather than opacity: fading
                     // the whole cell took the numeral under 4.5:1.
-                    background: isPast ? 'var(--surface-2)' : heatFor(count, max),
-                    boxShadow: isToday ? 'inset 0 0 0 2px var(--accent)' : undefined,
+                    background: isPast ? 'var(--bg-soft)' : heatFor(count, max),
+                    boxShadow: isToday ? 'inset 0 0 0 2px var(--brand)' : undefined,
                   }}
                 >
                   <span className="flex items-baseline justify-between gap-1">

@@ -1,15 +1,18 @@
-import { memo, useState } from 'react';
+import { Video } from 'lucide-react';
+import { memo } from 'react';
 import { SECTOR_LABEL } from '../../data/sectors';
 import { formatShortDay, formatTime } from '../../data/time';
 import type { CalEvent } from '../../data/types';
-import { SectorIcon } from '../SectorIcon';
+import { EventVisual } from './EventVisual';
 
 /**
  * Rows are time-first, not image-first. A home listing is chosen by how it
  * looks; an event is chosen by when it happens.
  *
- * The row is an anchor to `?event=<key>` so middle-click and Cmd-click open a
- * tab, while a plain click is intercepted to open the sheet in place.
+ * v2 compresses the row from three stacked meta lines to one, and the visual
+ * from a 64px tile to a 44px circle, which roughly doubles how many events fit
+ * on a screen. The row is an anchor to `?event=<key>`, so middle-click and
+ * Cmd-click open a tab while a plain click opens the sheet in place.
  */
 export type EventRowProps = {
   event: CalEvent;
@@ -21,68 +24,16 @@ export type EventRowProps = {
   flash: boolean;
 };
 
-function Thumb({ event }: { event: CalEvent }) {
-  const [imageFailed, setImageFailed] = useState(false);
-  const [logoFailed, setLogoFailed] = useState(false);
-
-  const showImage = event.image !== null && !imageFailed;
-  const showLogo = !showImage && event.orgLogo !== null && !logoFailed;
-
-  if (showImage) {
-    return (
-      <img
-        src={event.image!}
-        alt=""
-        width={64}
-        height={64}
-        loading="lazy"
-        decoding="async"
-        onError={() => setImageFailed(true)}
-        className="h-16 w-16 rounded-[var(--r-thumb)] object-cover"
-        style={{ background: 'var(--surface-2)' }}
-      />
-    );
-  }
-
-  if (showLogo) {
-    return (
-      <img
-        src={event.orgLogo!}
-        alt=""
-        width={64}
-        height={64}
-        loading="lazy"
-        decoding="async"
-        onError={() => setLogoFailed(true)}
-        className="h-16 w-16 rounded-[var(--r-thumb)] object-contain p-2"
-        style={{ background: 'var(--surface-2)' }}
-      />
-    );
-  }
-
-  return (
-    <div
-      className="flex h-16 w-16 items-center justify-center rounded-[var(--r-thumb)]"
-      style={{
-        background: `var(--sector-${event.primarySector}-tint)`,
-        color: `var(--sector-${event.primarySector})`,
-      }}
-    >
-      <SectorIcon sector={event.primarySector} size={22} />
-    </div>
-  );
-}
-
-function Badge({ tone, children }: { tone: 'danger' | 'quiet' | 'accent'; children: string }) {
+function Badge({ tone, children }: { tone: 'danger' | 'quiet' | 'brand'; children: string }) {
   const style =
     tone === 'danger'
       ? { background: 'var(--sector-politics-tint)', color: 'var(--danger)' }
-      : tone === 'accent'
-        ? { background: 'var(--accent-soft)', color: 'var(--accent)' }
-        : { background: 'var(--surface-2)', color: 'var(--ink-2)' };
+      : tone === 'brand'
+        ? { background: 'var(--brand-soft)', color: 'var(--brand-soft-ink)' }
+        : { background: 'var(--bg-soft)', color: 'var(--ink-2)' };
   return (
     <span
-      className="t-caption ml-2 inline-block shrink-0 rounded-[var(--r-pill)] px-2 py-[2px] align-middle"
+      className="t-caption ml-2 inline-block shrink-0 rounded-[var(--r-pill)] px-2 py-[1px] align-middle"
       style={style}
     >
       {children}
@@ -98,13 +49,13 @@ export const EventRow = memo(function EventRow({
   onHover,
   flash,
 }: EventRowProps) {
-  // Fall back to the address when there is no venue name, so a row only says
-  // "Location not listed" when the feed really gave us nothing.
-  const place =
-    [event.venue ?? event.address, event.locality].filter(Boolean).join(', ') ||
-    'Location not listed';
+  // One truncated line rather than v1's three: organizer, venue, locality.
+  const place = event.online
+    ? null
+    : [event.venue, event.locality].filter(Boolean).join(', ') ||
+      event.address ||
+      'Location not listed';
 
-  // The accessible description carries everything colour and layout imply.
   const sectorNames = event.sectors.map((s) => SECTOR_LABEL[s]).join(', ');
   const timeText = event.allDay
     ? 'All day'
@@ -115,7 +66,7 @@ export const EventRow = memo(function EventRow({
     timeText,
     sectorNames,
     event.orgName,
-    place,
+    event.online ? 'Online' : place,
     event.cancelled ? 'Cancelled' : null,
   ]
     .filter(Boolean)
@@ -128,8 +79,8 @@ export const EventRow = memo(function EventRow({
         aria-current={selected ? 'true' : undefined}
         aria-describedby={`d-${event.key}`}
         data-event-key={event.key}
+        title={event.title}
         onClick={(e) => {
-          // Leave modified clicks to the browser so a new tab still works.
           if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
           e.preventDefault();
           onOpen(event.key);
@@ -138,20 +89,11 @@ export const EventRow = memo(function EventRow({
         onPointerLeave={() => onHover(null)}
         onFocus={() => onHover(event.key)}
         onBlur={() => onHover(null)}
-        className={`focus-inset grid grid-cols-[76px_1fr_auto] items-start gap-3 px-4 py-4 transition-colors sm:gap-4 ${
+        className={`row-lift focus-inset grid grid-cols-[72px_1fr_44px] items-start gap-3 rounded-[var(--r-card)] px-3 py-[14px] ${
           flash ? 'row-flash' : ''
-        }`}
-        style={{
-          background: selected ? 'var(--accent-soft)' : undefined,
-        }}
-        onMouseEnter={(e) => {
-          if (!selected) e.currentTarget.style.background = 'var(--surface-2)';
-        }}
-        onMouseLeave={(e) => {
-          if (!selected) e.currentTarget.style.background = '';
-        }}
+        } ${selected ? 'row-selected' : ''}`}
       >
-        <div className="pt-[2px]">
+        <span className="pt-[1px]">
           {event.allDay ? (
             <span className="t-row-time block" style={{ color: 'var(--ink)' }}>
               All day
@@ -168,7 +110,7 @@ export const EventRow = memo(function EventRow({
               {event.end && (
                 <time
                   dateTime={event.end.toISOString()}
-                  className="t-row-time block font-normal"
+                  className="t-row-time-end block"
                   style={{ color: 'var(--ink-2)' }}
                 >
                   {formatTime(event.end, tz)}
@@ -176,49 +118,49 @@ export const EventRow = memo(function EventRow({
               )}
             </>
           )}
-        </div>
+        </span>
 
-        <div className="min-w-0">
-          {/* A cancelled listing is struck through and badged rather than
-              faded: 60% opacity took the muted ink to 3.3:1. */}
-          <h3
-            className="t-row-title clamp-2"
-            style={{
-              color: event.cancelled ? 'var(--ink-2)' : 'var(--ink)',
-              textDecoration: event.cancelled ? 'line-through' : undefined,
-            }}
-          >
+        <span className="min-w-0">
+          <span className="t-row-title clamp-2 block" style={{ color: 'var(--ink)' }}>
             {event.title}
             {event.cancelled && <Badge tone="danger">Cancelled</Badge>}
-            {event.featured && <Badge tone="accent">Code Collective</Badge>}
+            {event.featured && <Badge tone="brand">Code Collective</Badge>}
             {event.recurring && !event.cancelled && <Badge tone="quiet">Repeats</Badge>}
-          </h3>
+          </span>
 
-          <p className="t-meta mt-1 flex min-w-0 items-center gap-2" style={{ color: 'var(--ink-2)' }}>
+          <span
+            className="t-row-meta mt-[3px] flex min-w-0 items-center gap-1.5"
+            style={{ color: 'var(--ink-2)' }}
+          >
             <span
               aria-hidden
               className="h-2 w-2 shrink-0 rounded-full"
               style={{ background: `var(--sector-${event.primarySector})` }}
             />
-            <span className="truncate">{event.orgName}</span>
-          </p>
-
-          <p className="t-meta mt-[2px] truncate" style={{ color: 'var(--ink-2)' }}>
-            {place}
-          </p>
-
-          {event.endDayKey && (
-            <p className="t-caption mt-1" style={{ color: 'var(--ink-2)' }}>
-              Until {formatShortDay(event.endDayKey, tz)}
-            </p>
-          )}
+            <span className="truncate">
+              {event.orgName}
+              {place ? `, ${place}` : ''}
+            </span>
+            {event.online && (
+              <span
+                className="t-caption flex shrink-0 items-center gap-1 rounded-[var(--r-pill)] px-2"
+                style={{ background: 'var(--brand-soft)', color: 'var(--brand-soft-ink)' }}
+              >
+                <Video size={11} strokeWidth={2} aria-hidden />
+                Online
+              </span>
+            )}
+            {event.endDayKey && (
+              <span className="t-caption shrink-0">Until {formatShortDay(event.endDayKey, tz)}</span>
+            )}
+          </span>
 
           <span id={`d-${event.key}`} className="sr-only">
             {description}
           </span>
-        </div>
+        </span>
 
-        <Thumb event={event} />
+        <EventVisual event={event} />
       </a>
     </li>
   );

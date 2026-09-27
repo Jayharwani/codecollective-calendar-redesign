@@ -1,9 +1,9 @@
-import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RAIL_ORDER, SECTOR_LABEL } from '../../data/sectors';
-import type { LensId, SectorId } from '../../data/types';
 import { LENSES } from '../../data/lenses';
+import { RAIL_ORDER, SECTOR_LABEL, isSectorId } from '../../data/sectors';
+import type { LensId, SectorId } from '../../data/types';
 import { spring } from '../../motion/tokens';
 import { SectorIcon } from '../SectorIcon';
 
@@ -11,8 +11,6 @@ export type SectorRailProps = {
   lens: LensId;
   selected: string[];
   onSelect: (id: string | null) => void;
-  onOpenFilters: () => void;
-  filterCount: number;
 };
 
 type Item = { id: string; label: string; color?: string };
@@ -29,13 +27,14 @@ function itemsFor(lens: LensId): Item[] {
   return LENSES[lens].categories.map((c) => ({ id: c.id, label: c.label, color: c.color }));
 }
 
-export function SectorRail({
-  lens,
-  selected,
-  onSelect,
-  onOpenFilters,
-  filterCount,
-}: SectorRailProps) {
+/** The colour that identifies a rail item once it is active. */
+function accentFor(item: Item | null): string {
+  if (item === null) return 'var(--brand)';
+  if (item.color) return item.color;
+  return isSectorId(item.id) ? `var(--sector-${item.id})` : 'var(--brand)';
+}
+
+export function SectorRail({ lens, selected, onSelect }: SectorRailProps) {
   const scrollerRef = useRef<HTMLUListElement | null>(null);
   const [overflow, setOverflow] = useState({ start: false, end: false });
   const items = itemsFor(lens);
@@ -71,6 +70,7 @@ export function SectorRail({
     const isAll = item === null;
     const id = isAll ? 'all' : item.id;
     const active = isAll ? allActive : selected.includes(item.id);
+    const accent = accentFor(item);
 
     return (
       <li key={id} className="relative shrink-0">
@@ -78,21 +78,25 @@ export function SectorRail({
           type="button"
           aria-pressed={active}
           onClick={() => onSelect(isAll ? null : item.id)}
-          className="rail-item flex w-[84px] flex-col items-center gap-1 px-2 pt-2 pb-2"
-          style={{ minHeight: 60, color: active ? 'var(--ink)' : 'var(--ink-2)' }}
+          // A 76px floor plus 12px of padding, so labels can never touch.
+          className="rail-item flex flex-col items-center justify-center gap-1 px-3"
+          style={{
+            minWidth: 76,
+            minHeight: 56,
+            color: active ? 'var(--ink)' : 'var(--ink-2)',
+          }}
         >
-          <span className="rail-icon flex h-5 items-center justify-center">
+          <span
+            className="rail-icon flex h-[22px] items-center justify-center"
+            style={{ color: active ? accent : 'var(--ink-2)' }}
+          >
             {isAll || item.color === undefined ? (
-              <SectorIcon sector={(isAll ? 'all' : item.id) as SectorId | 'all'} size={20} />
+              <SectorIcon sector={(isAll ? 'all' : item.id) as SectorId | 'all'} size={22} />
             ) : (
-              <span
-                aria-hidden
-                className="h-3 w-3 rounded-full"
-                style={{ background: item.color }}
-              />
+              <span aria-hidden className="h-3 w-3 rounded-full" style={{ background: item.color }} />
             )}
           </span>
-          <span className="t-caption text-center leading-tight">
+          <span className={`t-rail whitespace-nowrap ${active ? 't-rail-active' : ''}`}>
             {isAll ? 'All' : item.label}
           </span>
         </button>
@@ -101,8 +105,8 @@ export function SectorRail({
             layoutId="rail-underline"
             transition={spring.snappy}
             aria-hidden
-            className="absolute right-2 bottom-0 left-2 block h-[2px]"
-            style={{ background: 'var(--ink)' }}
+            className="absolute right-2 bottom-0 left-2 block h-[2px] rounded-full"
+            style={{ background: accent }}
           />
         )}
       </li>
@@ -117,7 +121,10 @@ export function SectorRail({
           onClick={() => nudge(-1)}
           aria-label="Scroll sectors left"
           className="absolute left-0 z-10 hidden h-full w-8 items-center justify-center md:flex"
-          style={{ background: 'linear-gradient(to right, var(--bg) 55%, transparent)', color: 'var(--ink-2)' }}
+          style={{
+            background: 'linear-gradient(to right, var(--bg) 60%, transparent)',
+            color: 'var(--ink-2)',
+          }}
         >
           <ChevronLeft size={18} strokeWidth={1.5} aria-hidden />
         </button>
@@ -125,7 +132,7 @@ export function SectorRail({
 
       <ul
         ref={scrollerRef}
-        className={`no-scrollbar m-0 flex flex-1 list-none items-stretch gap-0 overflow-x-auto p-0 px-2 ${
+        className={`no-scrollbar m-0 flex flex-1 list-none items-stretch overflow-x-auto p-0 ${
           overflow.start || overflow.end ? 'rail-mask' : ''
         }`}
       >
@@ -138,45 +145,15 @@ export function SectorRail({
           type="button"
           onClick={() => nudge(1)}
           aria-label="Scroll sectors right"
-          className="absolute z-10 hidden h-full w-8 items-center justify-center md:flex"
+          className="absolute right-0 z-10 hidden h-full w-8 items-center justify-center md:flex"
           style={{
-            right: 108,
-            background: 'linear-gradient(to left, var(--bg) 55%, transparent)',
+            background: 'linear-gradient(to left, var(--bg) 60%, transparent)',
             color: 'var(--ink-2)',
           }}
         >
           <ChevronRight size={18} strokeWidth={1.5} aria-hidden />
         </button>
       )}
-
-      <div className="shrink-0 pr-4 pl-2">
-        <button
-          type="button"
-          onClick={onOpenFilters}
-          // The word is hidden on narrow screens; the name must not be.
-          aria-label={filterCount > 0 ? `Filters, ${filterCount} active` : 'Filters'}
-          className="t-meta relative flex items-center justify-center gap-2 rounded-[var(--r-pill)] border px-3 py-2"
-          style={{
-            borderColor: 'var(--line)',
-            background: 'var(--surface)',
-            color: 'var(--ink)',
-            minWidth: 44,
-            minHeight: 44,
-          }}
-        >
-          <SlidersHorizontal size={16} strokeWidth={1.5} aria-hidden />
-          <span className="hidden sm:inline">Filters</span>
-          {filterCount > 0 && (
-            <span
-              className="t-caption tnum flex h-5 min-w-5 items-center justify-center rounded-full px-1"
-              style={{ background: 'var(--accent)', color: 'var(--accent-ink)' }}
-            >
-              {filterCount}
-              <span className="sr-only"> filters active</span>
-            </span>
-          )}
-        </button>
-      </div>
     </div>
   );
 }

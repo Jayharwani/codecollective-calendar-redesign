@@ -74,7 +74,7 @@ export function Header({ condensed, docked, onSubscribe }: HeaderProps) {
             className="t-meta flex items-center justify-center gap-2 rounded-[var(--r-pill)] border px-3 py-2"
             style={{
               borderColor: 'var(--line)',
-              background: 'var(--surface)',
+              background: 'var(--bg)',
               color: 'var(--ink)',
               minWidth: 44,
               minHeight: 44,
@@ -111,7 +111,7 @@ export function Header({ condensed, docked, onSubscribe }: HeaderProps) {
           id="mobile-nav"
           aria-label="Main"
           className="border-t md:hidden"
-          style={{ borderColor: 'var(--line)', background: 'var(--surface)' }}
+          style={{ borderColor: 'var(--line)', background: 'var(--bg)' }}
         >
           <ul className="m-0 list-none p-2">
             {NAV.map((item) => (

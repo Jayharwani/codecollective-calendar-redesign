@@ -34,6 +34,8 @@ export type MapPanelProps = {
   hoveredKey: string | null;
   dark: boolean;
   onSelect: (key: string) => void;
+  /** Called once when the basemap cannot be shown, so the rail can collapse. */
+  onUnavailable?: () => void;
 };
 
 type FeatureProps = { key: string; sector: string; title: string; start: number };
@@ -112,6 +114,7 @@ export default function MapPanel({
   hoveredKey,
   dark,
   onSelect,
+  onUnavailable,
 }: MapPanelProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -327,36 +330,53 @@ export default function MapPanel({
 
   const activeEvent = events.find((e) => e.key === (selectedKey ?? hoveredKey)) ?? null;
 
+  // The rail owns the failure copy, so it can collapse to a 72px note instead
+  // of leaving a card-sized hole.
+  const reported = useRef(false);
+  useEffect(() => {
+    if (failed && !reported.current) {
+      reported.current = true;
+      onUnavailable?.();
+    }
+  }, [failed, onUnavailable]);
+
   if (failed) {
     return (
       <div
-        className="flex h-full items-center justify-center rounded-[var(--r-sheet)] p-6"
-        style={{ background: 'var(--surface-2)' }}
+        className="flex h-full items-center justify-center p-6"
+        style={{ background: 'var(--bg-soft)' }}
       >
         <p className="t-meta text-center" style={{ color: 'var(--ink-2)' }}>
-          The map could not load. The list has every event.
+          Map unavailable here. Every event is in the list.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-[var(--r-sheet)]">
+    <div className="relative h-full w-full overflow-hidden">
       <div ref={hostRef} className="h-full w-full" />
 
       {activeEvent && (
         <span
           className="t-caption tnum pointer-events-none absolute top-3 left-3 rounded-[var(--r-pill)] px-3 py-1"
-          style={{ background: 'var(--surface)', color: 'var(--ink)', boxShadow: 'var(--shadow-pill)' }}
+          style={{ background: 'var(--bg)', color: 'var(--ink)', boxShadow: 'var(--shadow-pill)' }}
         >
           {formatTime(activeEvent.start, tz)} · {activeEvent.title}
         </span>
       )}
 
       {unmappedCount > 0 && (
+        /* Raised clear of MapLibre's attribution strip, which also sits
+           bottom-left and is not ours to move. */
         <p
-          className="t-caption absolute bottom-3 left-3 rounded-[var(--r-pill)] px-3 py-1"
-          style={{ background: 'var(--surface)', color: 'var(--ink-2)', boxShadow: 'var(--shadow-pill)' }}
+          className="t-caption absolute left-3 rounded-[var(--r-pill)] px-3 py-1"
+          style={{
+            bottom: 28,
+            background: 'var(--bg)',
+            color: 'var(--ink-2)',
+            boxShadow: 'var(--shadow-pill)',
+          }}
         >
           Not on map: {unmappedCount} events without a mapped location
         </p>

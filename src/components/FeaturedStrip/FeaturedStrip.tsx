@@ -30,8 +30,8 @@ export function FeaturedStrip({
                 className="block aspect-[4/3] w-full rounded-[var(--r-image)] bg-cover bg-center"
                 style={{
                   background: e.image
-                    ? `var(--surface-2) url(${JSON.stringify(e.image)}) center/cover no-repeat`
-                    : 'var(--surface-2)',
+                    ? `var(--bg-soft) url(${JSON.stringify(e.image)}) center/cover no-repeat`
+                    : 'var(--bg-soft)',
                 }}
               />
               <span className="t-caption tnum mt-2 block" style={{ color: 'var(--ink-2)' }}>

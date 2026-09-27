@@ -61,7 +61,7 @@ async function copyText(text: string, onToast: (m: string) => void, message: str
 }
 
 const menuPopupStyle: React.CSSProperties = {
-  background: 'var(--surface)',
+  background: 'var(--bg)',
   borderRadius: 'var(--r-cell)',
   boxShadow: 'var(--shadow-sheet)',
   padding: 6,
@@ -99,7 +99,7 @@ function Body({
           alt=""
           onError={() => setImageFailed(true)}
           className="aspect-video w-full rounded-[var(--r-image)] object-cover"
-          style={{ background: 'var(--surface-2)' }}
+          style={{ background: 'var(--bg-soft)' }}
         />
       )}
 
@@ -123,8 +123,8 @@ function Body({
             <span
               className="t-caption flex items-center gap-1 rounded-[var(--r-pill)] px-2 py-[2px]"
               style={{
-                background: status === 'Happening now' ? 'transparent' : 'var(--accent-soft)',
-                color: status === 'Happening now' ? 'var(--live)' : 'var(--accent)',
+                background: status === 'Happening now' ? 'transparent' : 'var(--brand-soft)',
+                color: status === 'Happening now' ? 'var(--live)' : 'var(--brand)',
               }}
             >
               {status === 'Happening now' && (
@@ -164,7 +164,7 @@ function Body({
               target="_blank"
               rel="noopener noreferrer"
               className="t-meta mt-1 inline-block underline"
-              style={{ color: 'var(--accent)', textUnderlineOffset: '2px' }}
+              style={{ color: 'var(--brand-on-bg)', textUnderlineOffset: '2px' }}
             >
               Open in Maps
             </a>
@@ -180,7 +180,7 @@ function Body({
             width={32}
             height={32}
             className="h-8 w-8 rounded-full object-contain"
-            style={{ background: 'var(--surface-2)' }}
+            style={{ background: 'var(--bg-soft)' }}
           />
         )}
         <p className="t-body" style={{ color: 'var(--ink)' }}>
@@ -261,14 +261,14 @@ function Actions({
   return (
     <div
       className="flex flex-wrap items-center gap-2 border-t px-5 py-4"
-      style={{ borderColor: 'var(--line)', background: 'var(--surface)' }}
+      style={{ borderColor: 'var(--line)', background: 'var(--bg)' }}
     >
       <a
         href={event.url}
         target="_blank"
         rel="noopener noreferrer"
         className="t-meta flex items-center gap-2 rounded-[var(--r-pill)] px-4 py-2.5"
-        style={{ background: 'var(--accent)', color: 'var(--accent-ink)', minHeight: 44 }}
+        style={{ background: 'var(--brand-on-bg)', color: 'var(--brand-ink)', minHeight: 44 }}
       >
         <ExternalLink size={16} strokeWidth={1.5} aria-hidden />
         View event page
@@ -425,7 +425,7 @@ export function EventSheet({
               bottom: 0,
               zIndex: 71,
               maxHeight: '92dvh',
-              background: 'var(--surface)',
+              background: 'var(--bg)',
               borderTopLeftRadius: 'var(--r-sheet)',
               borderTopRightRadius: 'var(--r-sheet)',
               boxShadow: 'var(--shadow-sheet)',
@@ -457,7 +457,7 @@ export function EventSheet({
             bottom: 16,
             zIndex: 71,
             width: 'min(520px, calc(100vw - 32px))',
-            background: 'var(--surface)',
+            background: 'var(--bg)',
             borderRadius: 'var(--r-sheet)',
             boxShadow: 'var(--shadow-sheet)',
             overflow: 'hidden',

@@ -1,34 +1,28 @@
-import { Map as MapIcon, List } from 'lucide-react';
+import { List, Map as MapIcon } from 'lucide-react';
 import {
   Component,
   Suspense,
   lazy,
   useCallback,
-  useEffect,
-  useLayoutEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { Agenda } from '../components/Agenda/Agenda';
-import { countLabel } from '../components/Agenda/DaySection';
-import { FeaturedStrip } from '../components/FeaturedStrip/FeaturedStrip';
+import { ContextRail } from '../components/ContextRail/ContextRail';
+import { ControlBar } from '../components/ControlBar/ControlBar';
 import { Footer } from '../components/Footer';
-import { Header } from '../components/Header/Header';
+import { BrandBand } from '../components/Header/BrandBand';
 import { MonthGrid } from '../components/MonthGrid/MonthGrid';
 import { SearchPill } from '../components/SearchPill/SearchPill';
-import { SectorRail } from '../components/SectorRail/SectorRail';
 import {
   AgendaSkeleton,
   EmptyState,
   ErrorState,
   MetaSkeleton,
-  OfflineBanner,
-  SnapshotBanner,
-  StaleBanner,
   TideSkeleton,
 } from '../components/States/States';
+import { StatusChip, dataStatus } from '../components/States/StatusChip';
 import { TideLine } from '../components/TideLine/TideLine';
 import { getCity } from '../data/cities';
 import { invalidateEvents } from '../data/fetchEvents';
@@ -36,11 +30,10 @@ import { buildPredicates, type FilterState } from '../data/filters';
 import { isSectorId } from '../data/sectors';
 import { relativeTime } from '../data/time';
 import type { DatePreset, SectorId } from '../data/types';
-import { isDarkNow } from './theme';
+import { useChromeHeight, useCondensed, useDarkTheme, useMediaQuery } from './layoutHooks';
 import { useCalendar } from './useCalendar';
 
 /* Heavy, interaction-only surfaces stay out of the initial payload. */
-const MapPanel = lazy(() => import('../components/MapPanel/MapPanel'));
 const EventSheet = lazy(() =>
   import('../components/EventSheet/EventSheet').then((m) => ({ default: m.EventSheet })),
 );
@@ -51,6 +44,9 @@ const SubscribePopover = lazy(() =>
   import('../components/SubscribePopover/SubscribePopover').then((m) => ({
     default: m.SubscribePopover,
   })),
+);
+const Interlude = lazy(() =>
+  import('../components/Interlude/Interlude').then((m) => ({ default: m.Interlude })),
 );
 
 /* ---------------- error boundary ---------------- */
@@ -70,81 +66,14 @@ class Boundary extends Component<BoundaryProps, { failed: boolean }> {
   }
 }
 
-/* ---------------- hooks ---------------- */
-
-const STALE_AFTER_MS = 48 * 3600_000;
-const CONDENSE_AT = 80;
-
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(() =>
-    typeof window === 'undefined' ? false : window.matchMedia(query).matches,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia(query);
-    const onChange = () => setMatches(mq.matches);
-    onChange();
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, [query]);
-  return matches;
-}
-
-function useCondensed(): boolean {
-  const [condensed, setCondensed] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setCondensed(window.scrollY > CONDENSE_AT);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  return condensed;
-}
-
-/**
- * Publishes the measured height of the sticky chrome as `--chrome-h`, so day
- * headers stick directly beneath it and `scroll-padding-top` keeps focused
- * elements out from under it. Measured, not guessed: the chrome changes height
- * between breakpoints and when the title block collapses.
- */
-function useChromeHeight<T extends HTMLElement>() {
-  const ref = useRef<T | null>(null);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const publish = () =>
-      document.documentElement.style.setProperty(
-        '--chrome-h',
-        `${Math.round(el.getBoundingClientRect().height)}px`,
-      );
-    publish();
-    const ro = new ResizeObserver(publish);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  return ref;
-}
-
-function useDarkTheme(): boolean {
-  const [dark, setDark] = useState(() => (typeof window === 'undefined' ? false : isDarkNow()));
-  useEffect(() => {
-    const update = () => setDark(isDarkNow());
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    mq.addEventListener('change', update);
-    const mo = new MutationObserver(update);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => {
-      mq.removeEventListener('change', update);
-      mo.disconnect();
-    };
-  }, []);
-  return dark;
-}
-
 /* ---------------- toast ---------------- */
 
 function Toast({ message }: { message: string | null }) {
   return (
-    <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-[90] flex justify-center">
+    <div
+      aria-live="polite"
+      className="pointer-events-none fixed inset-x-0 bottom-6 z-[90] flex justify-center"
+    >
       {message && (
         <span
           className="t-meta rounded-[var(--r-pill)] px-4 py-2"
@@ -158,6 +87,8 @@ function Toast({ message }: { message: string | null }) {
 }
 
 /* ---------------- shell ---------------- */
+
+const STALE_AFTER_MS = 48 * 3600_000;
 
 function Calendar() {
   const cal = useCalendar();
@@ -176,8 +107,8 @@ function Calendar() {
   const isPhone = useMediaQuery('(max-width: 767px)');
   const isWide = useMediaQuery('(min-width: 1280px)');
 
-  // The map shows by default on wide screens, and the URL always wins.
-  const mapOn = url.mapParam ?? isWide;
+  const mapOn = url.mapParam ?? true;
+  const railVisible = isWide && url.view === 'agenda';
 
   const showToast = useCallback((message: string) => {
     setToast(message);
@@ -262,12 +193,10 @@ function Calendar() {
       const p = buildPredicates(draft, {
         tz: cal.tz,
         todayKey: cal.todayKey,
-        todayWeekday: new Date(cal.now).getDay(),
+        todayWeekday: cal.todayWeekday,
       });
       const searchKeys =
-        draft.query.trim() === ''
-          ? null
-          : new Set(derived.filtered.map((e) => e.key));
+        draft.query.trim() === '' ? null : new Set(derived.filtered.map((e) => e.key));
       let n = 0;
       for (const e of cal.events) {
         if (searchKeys && !searchKeys.has(e.key)) continue;
@@ -275,7 +204,7 @@ function Calendar() {
       }
       return n;
     },
-    [cal.events, cal.tz, cal.todayKey, cal.now, derived.filtered],
+    [cal.events, cal.tz, cal.todayKey, cal.todayWeekday, derived.filtered],
   );
 
   const selectedEvent = useMemo(
@@ -290,16 +219,22 @@ function Calendar() {
       .slice(0, 3);
   }, [selectedEvent, cal.events]);
 
-  const featured = useMemo(
-    () => derived.filtered.filter((e) => e.featured).slice(0, 8),
-    [derived.filtered],
-  );
+  const status = dataStatus({
+    feedSource: cal.feedSource,
+    snapshotDate: cal.snapshotDate,
+    newestScrapeAt: cal.newestScrapeAt,
+    now: cal.now,
+    staleAfterMs: STALE_AFTER_MS,
+  });
 
-  const stale =
-    cal.newestScrapeAt !== null && Date.now() - cal.newestScrapeAt.getTime() > STALE_AFTER_MS;
   const total = derived.filtered.length;
   const railSelected =
     url.filters.lens === 'community_sectors' ? url.filters.sectors : url.filters.lensCategories;
+  const soleSector = railSelected.length === 1 ? railSelected[0] : null;
+  const activeSectorColor =
+    soleSector !== undefined && soleSector !== null && isSectorId(soleSector)
+      ? `var(--sector-${soleSector})`
+      : null;
 
   const pill = (
     <SearchPill
@@ -313,215 +248,141 @@ function Calendar() {
       onWhen={onWhen}
       onQuery={actions.setQuery}
       isPhone={isPhone}
-      resultCount={derived.filtered.length}
+      compact={condensed}
+      resultCount={total}
       onClearAll={actions.clearAll}
     />
   );
 
-  const mapPanel = (
-    <MapPanel
-      events={derived.mappable}
-      unmappedCount={derived.unmappedCount}
-      center={getCity(url.city).center}
-      tz={cal.tz}
-      selectedKey={url.eventKey}
-      hoveredKey={hoveredKey}
-      dark={dark}
-      onSelect={onSelectFromMap}
-    />
-  );
-
-  const mapFallback = (
-    <div className="h-full rounded-[var(--r-sheet)]" style={{ background: 'var(--surface-2)' }} />
-  );
-
-  const listColumn = (
-    <>
-      <p className="sr-only" role="status" aria-live="polite">
-        {countLabel(total)}
-      </p>
-
-      {total === 0 ? (
-        <EmptyState
-          query={url.filters.query}
-          hasDateFilter={url.filters.datePreset !== 'any'}
-          relaxations={derived.relaxations}
-          onRelax={(r) => actions.applyFilters(r.patch)}
-          onClearAll={actions.clearAll}
-          onSearchAllDates={() => actions.applyFilters({ datePreset: 'any', from: null, to: null })}
-        />
-      ) : url.view === 'month' ? (
-        <MonthGrid
-          events={derived.filtered}
-          tz={cal.tz}
-          todayKey={cal.todayKey}
-          onPickDay={scrollToDay}
-        />
-      ) : (
-        <>
-          <FeaturedStrip events={featured} tz={cal.tz} onOpen={onOpen} />
-          <Agenda
-            days={derived.days}
-            tz={cal.tz}
-            todayKey={cal.todayKey}
-            selectedKey={url.eventKey ?? hoveredKey}
-            flashKey={flashKey}
-            onOpen={onOpen}
-            onHover={onHover}
-            onVisibleDayChange={onVisibleDayChange}
-            resetToken={cal.resetToken}
-          />
-        </>
-      )}
-    </>
-  );
+  const listColumn =
+    total === 0 ? (
+      <EmptyState
+        query={url.filters.query}
+        hasDateFilter={url.filters.datePreset !== 'any'}
+        relaxations={derived.relaxations}
+        onRelax={(r) => actions.applyFilters(r.patch)}
+        onClearAll={actions.clearAll}
+        onSearchAllDates={() => actions.applyFilters({ datePreset: 'any', from: null, to: null })}
+      />
+    ) : url.view === 'month' ? (
+      <MonthGrid
+        events={derived.filtered}
+        tz={cal.tz}
+        todayKey={cal.todayKey}
+        onPickDay={scrollToDay}
+      />
+    ) : (
+      <Agenda
+        days={derived.days}
+        tz={cal.tz}
+        todayKey={cal.todayKey}
+        selectedKey={url.eventKey ?? hoveredKey}
+        flashKey={flashKey}
+        onOpen={onOpen}
+        onHover={onHover}
+        onVisibleDayChange={onVisibleDayChange}
+        resetToken={cal.resetToken}
+        interlude={
+          <Suspense fallback={null}>
+            <Interlude
+              events={derived.filtered}
+              tz={cal.tz}
+              todayKey={cal.todayKey}
+              todayWeekday={cal.todayWeekday}
+              suppressed={!derived.pristine}
+              onOpen={onOpen}
+              onSeeAll={() => actions.applyFilters({ datePreset: 'weekend' })}
+            />
+          </Suspense>
+        }
+      />
+    );
 
   return (
     <>
-      {/* Set only for the hosted preview build, so a viewer landing on the
-          link is never left thinking this is the live Code Collective site. */}
-      {import.meta.env.VITE_DEMO_NOTE === '1' && (
-        <p
-          className="t-caption px-4 py-2 text-center"
-          style={{ background: 'var(--surface-2)', color: 'var(--ink-2)' }}
-        >
-          Unofficial redesign concept. The live calendar is at{' '}
-          <a
-            href="https://codecollective.us/calendar?city=baltimore"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'var(--accent)', textDecoration: 'underline' }}
-          >
-            codecollective.us
-          </a>
-          .
-        </p>
-      )}
-
-      <Header
+      <BrandBand
         condensed={condensed}
-        docked={condensed ? pill : undefined}
         onSubscribe={() => setSubscribeOpen(true)}
+        pill={pill}
+        title={<>What&rsquo;s on in {cal.cityLabel}</>}
+        meta={
+          <>
+            {cal.events.length.toLocaleString('en-US')} events from {cal.organizers} organizers.
+            {cal.newestScrapeAt && <> Updated {relativeTime(cal.newestScrapeAt, cal.now)}.</>}{' '}
+            {cal.tzLabel === 'your time' ? 'Times in your time.' : `${cal.tzLabel}.`}
+            <StatusChip status={status} />
+          </>
+        }
       />
 
-      {!condensed && (
-        <div className="mx-auto w-full max-w-[1440px] px-4 pt-6 pb-4 sm:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <h1 className="t-display" style={{ color: 'var(--ink)' }}>
-                What&rsquo;s on in {cal.cityLabel}
-              </h1>
-              <p className="t-meta mt-2" style={{ color: 'var(--ink-2)' }}>
-                {cal.events.length.toLocaleString('en-US')} events from {cal.organizers} organizers.
-                {cal.newestScrapeAt && <> Updated {relativeTime(cal.newestScrapeAt, cal.now)}.</>}{' '}
-                Times in {cal.tzLabel}.
-              </p>
-              {cal.fromCache && <OfflineBanner />}
-              {cal.feedSource === 'snapshot' && <SnapshotBanner takenOn={cal.snapshotDate} />}
-              {stale && cal.feedSource !== 'snapshot' && cal.newestScrapeAt && (
-                <StaleBanner newest={cal.newestScrapeAt} />
-              )}
-            </div>
-            <div className="w-full lg:w-auto lg:min-w-[520px]">{pill}</div>
-          </div>
-        </div>
-      )}
+      <ControlBar
+        lens={url.filters.lens}
+        selected={railSelected}
+        onSelect={onSelectSector}
+        onOpenFilters={() => setFiltersOpen(true)}
+        filterCount={cal.filtersActive}
+        view={url.view}
+        onView={actions.setView}
+        mapOn={mapOn}
+        onMap={actions.setMap}
+        isPhone={isPhone}
+        stuck={condensed}
+      />
 
-      <div ref={chromeRef} className="sticky top-0 z-30" style={{ background: 'var(--bg)' }}>
-        <div
-          className="mx-auto w-full max-w-[1440px] border-b"
-          style={{ borderColor: 'var(--line)' }}
-        >
-          <SectorRail
-            lens={url.filters.lens}
-            selected={railSelected}
-            onSelect={onSelectSector}
-            onOpenFilters={() => setFiltersOpen(true)}
-            filterCount={cal.filtersActive}
-          />
-          <div className="flex items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <TideLine
-                todayKey={cal.todayKey}
-                tz={cal.tz}
-                counts={derived.tideCounts}
-                activeDay={activeDay}
-                onPick={scrollToDay}
-                ready
-              />
-            </div>
+      <main
+        id="main"
+        className="mx-auto w-full max-w-[1440px] px-4 pb-24 sm:px-6"
+        aria-label={`${cal.cityLabel} events`}
+      >
+        <p className="sr-only" role="status" aria-live="polite">
+          {total === 1 ? '1 event' : `${total} events`}
+        </p>
 
-            {/* Given its own column so it never crowds the strip. */}
-            <div
-              className="hidden shrink-0 flex-col items-stretch gap-1 border-l pr-4 pl-3 md:flex"
-              style={{ borderColor: 'var(--line)' }}
-            >
+        <div className="flex gap-8">
+          <div className="min-w-0 flex-1">
+            {/* The tide line is the list column's own header, beside the list
+                it controls rather than spanning the whole page. */}
+            {url.view === 'agenda' && total > 0 && (
               <div
-                role="group"
-                aria-label="View"
-                className="flex rounded-[var(--r-pill)] border p-[2px]"
-                style={{ borderColor: 'var(--line)' }}
+                ref={chromeRef}
+                className="sticky z-20"
+                style={{
+                  top: 'calc(var(--band-h) + var(--control-h))',
+                  background: 'var(--bg)',
+                }}
               >
-                {(['agenda', 'month'] as const).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    aria-pressed={url.view === v}
-                    onClick={() => actions.setView(v)}
-                    className="t-caption rounded-[var(--r-pill)] px-3 py-1"
-                    style={{
-                      minHeight: 30,
-                      background: url.view === v ? 'var(--accent-soft)' : 'transparent',
-                      color: url.view === v ? 'var(--accent)' : 'var(--ink-2)',
-                    }}
-                  >
-                    {v === 'agenda' ? 'Agenda' : 'Month'}
-                  </button>
-                ))}
+                <TideLine
+                  todayKey={cal.todayKey}
+                  tz={cal.tz}
+                  counts={derived.tideCounts}
+                  activeDay={activeDay}
+                  onPick={scrollToDay}
+                  sectorColor={activeSectorColor}
+                  ready
+                />
               </div>
-              <button
-                type="button"
-                onClick={() => actions.setMap(!mapOn)}
-                className="t-caption rounded-[var(--r-pill)] border px-3 py-1"
-                style={{ borderColor: 'var(--line)', color: 'var(--ink-2)', minHeight: 30 }}
-              >
-                {mapOn ? 'Hide map' : 'Show map'}
-              </button>
-            </div>
+            )}
+            {listColumn}
           </div>
-        </div>
-      </div>
 
-      <main id="main" className="mx-auto w-full max-w-[1440px] pb-24" aria-label={`${cal.cityLabel} events`}>
-        {mapOn && isWide ? (
-          /* 1280 and up: list and map side by side. */
-          <div className="flex gap-4 px-4">
-            <div className="min-w-[560px] max-w-[720px] flex-1">{listColumn}</div>
-            <aside
-              aria-label="Map of events"
-              className="sticky block"
-              style={{
-                top: 'calc(var(--chrome-h) + 16px)',
-                height: 'calc(100dvh - var(--chrome-h) - 32px)',
-                flex: 1,
-              }}
-            >
-              <Suspense fallback={mapFallback}>{mapPanel}</Suspense>
-            </aside>
-          </div>
-        ) : mapOn ? (
-          /* Below 1280 the map replaces the list rather than squeezing it. */
-          <div
-            className="px-2 sm:px-4"
-            style={{ height: 'calc(100dvh - var(--chrome-h) - 24px)' }}
-          >
-            <aside aria-label="Map of events" className="h-full">
-              <Suspense fallback={mapFallback}>{mapPanel}</Suspense>
-            </aside>
-          </div>
-        ) : (
-          listColumn
-        )}
+          {railVisible && (
+            <ContextRail
+              mappable={derived.mappable}
+              unmappedCount={derived.unmappedCount}
+              localityCounts={derived.localityCounts}
+              onlineCount={derived.onlineCount}
+              center={getCity(url.city).center}
+              tz={cal.tz}
+              selectedKey={url.eventKey}
+              hoveredKey={hoveredKey}
+              dark={dark}
+              mapOn={mapOn}
+              onSelect={onSelectFromMap}
+              onPickLocality={(locality) => actions.applyFilters({ near: locality, radiusMiles: 5 })}
+              onPickOnline={() => actions.setQuery('online')}
+            />
+          )}
+        </div>
       </main>
 
       {/* Phones get a floating toggle rather than a second page. */}
@@ -537,7 +398,11 @@ function Calendar() {
           boxShadow: 'var(--shadow-sheet)',
         }}
       >
-        {mapOn ? <List size={16} strokeWidth={1.5} aria-hidden /> : <MapIcon size={16} strokeWidth={1.5} aria-hidden />}
+        {mapOn ? (
+          <List size={16} strokeWidth={1.5} aria-hidden />
+        ) : (
+          <MapIcon size={16} strokeWidth={1.5} aria-hidden />
+        )}
         {mapOn ? 'List' : 'Map'}
       </button>
 
@@ -562,9 +427,11 @@ function Calendar() {
             onOpenChange={setFiltersOpen}
             current={url.filters}
             sectorCounts={derived.sectorCounts}
+            localityCounts={derived.localityCounts}
             countFor={countFor}
             onApply={(next) => actions.applyFilters(next)}
             isPhone={isPhone}
+            showWherePanel={!railVisible}
           />
         )}
         {subscribeOpen && (
@@ -582,21 +449,16 @@ function Calendar() {
   );
 }
 
-/**
- * The heading is known from the URL alone, so it paints at first contentful
- * paint instead of waiting on a 2.6 MB feed. Before this, the largest
- * contentful element was the meta line with 4.3s of render delay, because
- * nothing at all was painted until the feed had been fetched, parsed and
- * normalized.
- */
 function LoadingShell({ cityLabel }: { cityLabel: string }) {
   return (
     <>
-      <div className="mx-auto w-full max-w-[1440px] px-4 pt-6 pb-4 sm:px-6">
-        <h1 className="t-display" style={{ color: 'var(--ink)' }}>
-          What&rsquo;s on in {cityLabel}
-        </h1>
-        <MetaSkeleton />
+      <div style={{ background: 'var(--brand)' }}>
+        <div className="mx-auto w-full max-w-[1440px] px-4 pt-[72px] pb-7 sm:px-6">
+          <h1 className="t-h1" style={{ color: 'var(--brand-ink)' }}>
+            What&rsquo;s on in {cityLabel}
+          </h1>
+          <MetaSkeleton />
+        </div>
       </div>
       <TideSkeleton />
       <AgendaSkeleton />

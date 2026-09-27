@@ -27,7 +27,7 @@ export type PhoneSearchProps = {
 };
 
 const cardStyle: React.CSSProperties = {
-  background: 'var(--surface)',
+  background: 'var(--bg)',
   borderRadius: 'var(--r-sheet)',
   border: '1px solid var(--line)',
   padding: 16,
@@ -143,8 +143,8 @@ export default function PhoneSearch({
                     className="t-meta rounded-[var(--r-pill)] border px-3"
                     style={{
                       minHeight: 44,
-                      borderColor: c.id === city ? 'var(--accent)' : 'var(--line)',
-                      background: c.id === city ? 'var(--accent-soft)' : 'transparent',
+                      borderColor: c.id === city ? 'var(--brand)' : 'var(--line)',
+                      background: c.id === city ? 'var(--brand-soft)' : 'transparent',
                       color: 'var(--ink)',
                     }}
                   >
@@ -168,8 +168,8 @@ export default function PhoneSearch({
                     className="t-meta rounded-[var(--r-pill)] border px-3"
                     style={{
                       minHeight: 44,
-                      borderColor: o.id === datePreset ? 'var(--accent)' : 'var(--line)',
-                      background: o.id === datePreset ? 'var(--accent-soft)' : 'transparent',
+                      borderColor: o.id === datePreset ? 'var(--brand)' : 'var(--line)',
+                      background: o.id === datePreset ? 'var(--brand-soft)' : 'transparent',
                       color: 'var(--ink)',
                     }}
                   >
@@ -221,7 +221,7 @@ export default function PhoneSearch({
             className="flex items-center justify-between gap-3 border-t px-4 py-3"
             style={{
               borderColor: 'var(--line)',
-              background: 'var(--surface)',
+              background: 'var(--bg)',
               paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
             }}
           >
@@ -237,7 +237,7 @@ export default function PhoneSearch({
               type="button"
               onClick={() => onOpenChange(false)}
               className="t-meta tnum rounded-[var(--r-pill)] px-5"
-              style={{ background: 'var(--accent)', color: 'var(--accent-ink)', minHeight: 44 }}
+              style={{ background: 'var(--brand)', color: 'var(--brand-ink)', minHeight: 44 }}
             >
               Show {resultCount.toLocaleString('en-US')} events
             </button>

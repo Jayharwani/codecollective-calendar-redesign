@@ -1,60 +1,101 @@
-/* Harbor: marble-stoop white, tidewater blue, harbor-night navy.
-   Contrast-checked pairs, see spec section 8.1. */
+/**
+ * v2 palette. Three roles, in strict proportion:
+ *
+ *   ~70% calm neutrals      content surfaces and the rail
+ *   ~20% Collective Blue    brand band, primary actions, selected states
+ *    ~8% sector colours     dots, avatars, posters, tide bars
+ *    ~2% Calvert gold       "now", and nothing else
+ *
+ * Collective Blue, Sky Highlight and Warm Emphasis come from Code Collective's
+ * own brand page. The gold is the Calvert gold of the Baltimore city flag: the
+ * energetic sibling of the brand's pale Warm Emphasis, kept for a single job.
+ *
+ * Light is the default. On white the brand band carries the depth and event
+ * photography reads properly.
+ */
 
 :root {
   color-scheme: light;
-  --bg: #f5f7f9;
-  --surface: #ffffff;
-  --surface-2: #eef2f5;
-  --line: #dde3e9;
-  --ink: #1b2733;
-  --ink-2: #586878;
-  --accent: #2c6a8a;
-  --accent-ink: #ffffff;
-  --accent-soft: #e3f3fb;
-  --live: #2f7a66;
+
+  /* surfaces */
+  --bg: #ffffff;
+  --bg-soft: #f5f8fc;
+  --line: #e3e9f1;
+
+  /* ink */
+  --ink: #0c1e36;
+  --ink-2: #51627a;
+
+  /* brand */
+  --brand: #002a61;
+  --brand-ink: #ffffff;
+  --brand-soft: #e6eef8;
+  /* Text on a brand-soft fill. Navy on the light tint; Sky on the dark one,
+     because navy on navy measures about 1.1:1. */
+  --brand-soft-ink: #002a61;
+  /* Brand colour that has to read against the page, not against the band:
+     link text, tide bars, the Where bars. Navy on white, Sky on navy. */
+  --brand-on-bg: #002a61;
+
+  /* Sky is legible on navy only. --sky-deep is its graphics-on-white sibling. */
+  --sky: #87ceeb;
+  --sky-deep: #1c86b8;
+
+  /* Gold is a fill, never a line, a dot, or text on white. */
+  --gold: #f2b233;
+  --gold-ink: #002a61;
+
+  --band-meta: #b9d7f0;
   --danger: #a94f4f;
-  --scrim: rgb(27 39 51 / 0.28);
+  --live: #f2b233;
+  /* The gutter numeral: brand on white, plain ink on navy. */
+  --gutter-num: var(--brand);
 
-  --heat-0: #f7fbfc;
-  --heat-1: #e5f3fa;
-  --heat-2: #d3ebf7;
-  --heat-3: #bde1f3;
-  --heat-4: #a6d6ee;
+  --scrim: rgb(12 30 54 / 0.34);
+  --shadow-lift: 0 6px 20px -8px rgb(0 42 97 / 0.18), 0 0 0 1px var(--line);
+  --shadow-pill: 0 1px 2px rgb(0 42 97 / 0.08), 0 6px 18px -6px rgb(0 42 97 / 0.16);
+  --shadow-sheet: 0 24px 48px -12px rgb(0 42 97 / 0.28), 0 0 0 1px var(--line);
 
-  /* Sector dots and tints, OKLCH-levelled so no sector outshouts another. */
-  --sector-technology: #4280b2;
-  --sector-technology-tint: #e3f2ff;
-  --sector-entrepreneurship: #008b96;
-  --sector-entrepreneurship-tint: #def5f8;
-  --sector-makerspace: #ac654b;
-  --sector-makerspace-tint: #ffebe4;
-  --sector-education: #6975b5;
-  --sector-education-tint: #ebefff;
-  --sector-economics: #0d8d82;
-  --sector-economics-tint: #dff6f2;
-  --sector-finance: #95752a;
-  --sector-finance-tint: #f8efde;
-  --sector-health: #3c8c66;
-  --sector-health-tint: #e3f6ea;
-  --sector-environment: #59894f;
-  --sector-environment-tint: #e8f5e5;
-  --sector-culture: #886aaa;
-  --sector-culture-tint: #f4ecfe;
-  --sector-government: #9f6392;
-  --sector-government-tint: #fceaf7;
-  --sector-politics: #ad6067;
-  --sector-politics-tint: #ffeaeb;
-  --sector-faith: #a56b38;
-  --sector-faith-tint: #fdede0;
-  --sector-other: #747b83;
-  --sector-other-tint: #eef1f4;
+  /* month heat: bg -> brand-soft -> brand at 35% */
+  --heat-0: #ffffff;
+  --heat-1: #f1f6fc;
+  --heat-2: #e6eef8;
+  --heat-3: #cddff2;
+  --heat-4: #a8c6e6;
 
-  /* Type */
+  /* Sector palette v2. Light L 0.57 C 0.135, every hue at least 4:1 on white. */
+  --sector-technology: #187dc1;
+  --sector-technology-tint: #ddf3ff;
+  --sector-entrepreneurship: #008c9d;
+  --sector-entrepreneurship-tint: #d6f8fb;
+  --sector-makerspace: #b85734;
+  --sector-makerspace-tint: #ffe9df;
+  --sector-education: #616ec6;
+  --sector-education-tint: #e9efff;
+  --sector-economics: #009082;
+  --sector-economics-tint: #d7f8f3;
+  --sector-finance: #9b6f00;
+  --sector-finance-tint: #fbefd6;
+  --sector-health: #008f5b;
+  --sector-health-tint: #ddf8e8;
+  --sector-environment: #478a38;
+  --sector-environment-tint: #e4f6e0;
+  --sector-culture: #8a60b6;
+  --sector-culture-tint: #f5ebff;
+  --sector-government: #a65597;
+  --sector-government-tint: #ffe8fa;
+  --sector-politics: #b9515d;
+  --sector-politics-tint: #ffe7e9;
+  --sector-faith: #af6000;
+  --sector-faith-tint: #ffebd9;
+  --sector-other: #6b7684;
+  --sector-other-tint: #eef1f5;
+
+  /* type */
   --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, -apple-system,
     'Segoe UI', Roboto, sans-serif;
 
-  /* Space, 4px base */
+  /* space, 4px base */
   --s1: 4px;
   --s2: 8px;
   --s3: 12px;
@@ -66,154 +107,178 @@
   --s9: 56px;
   --s10: 80px;
 
-  /* Radius hierarchy, intentionally varied */
+  /* radius */
   --r-pill: 999px;
   --r-sheet: 20px;
   --r-image: 16px;
+  --r-card: 14px;
   --r-cell: 12px;
   --r-thumb: 10px;
 
-  /* Elevation */
-  --shadow-pill: 0 1px 2px rgb(14 26 36 / 0.06), 0 4px 12px rgb(14 26 36 / 0.06);
-  --shadow-sheet: 0 24px 48px -12px rgb(14 26 36 / 0.25), 0 0 0 1px var(--line);
-
-  /* Sticky chrome height, kept in a variable so scroll-padding can track it. */
-  --chrome-h: 214px;
+  /* Sticky chrome, published by the layout and read by scroll-padding. */
+  --band-h: 64px;
+  --control-h: 64px;
+  --tide-h: 76px;
+  --chrome-h: 204px;
 }
 
-/* Dark theme: applied by explicit opt-in, and by preference unless the
-   visitor has explicitly chosen light. */
-:root[data-theme='dark'],
-:root:not([data-theme='light']) {
-  @media (prefers-color-scheme: dark) {
+/* The page sits darker than the band, so the band still reads as the anchor. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #04162e;
+  --bg-soft: #0a2447;
+  --line: #1a3a66;
+
+  --ink: #eaf2fb;
+  --ink-2: #9db3cf;
+
+  --brand: #002a61;
+  --brand-ink: #ffffff;
+  --brand-soft: #0f2d57;
+  --brand-soft-ink: #87ceeb;
+  --brand-on-bg: #87ceeb;
+
+  --sky: #87ceeb;
+  --sky-deep: #87ceeb;
+
+  --gold: #f5c04a;
+  --gold-ink: #04162e;
+
+  --band-meta: #b9d7f0;
+  --danger: #e08a8a;
+  --live: #f5c04a;
+  --gutter-num: var(--ink);
+
+  --scrim: rgb(1 8 18 / 0.6);
+  --shadow-lift: 0 8px 24px -10px rgb(0 0 0 / 0.5), 0 0 0 1px var(--line);
+  --shadow-pill: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 18px -6px rgb(0 0 0 / 0.45);
+  --shadow-sheet: 0 24px 48px -12px rgb(0 0 0 / 0.55), 0 0 0 1px var(--line);
+
+  --heat-0: #04162e;
+  --heat-1: #08223f;
+  --heat-2: #0f2d57;
+  --heat-3: #163b6f;
+  --heat-4: #1d4a8a;
+
+  /* Dark L 0.78 C 0.12, every hue at least 8.5:1 on #04162E. */
+  --sector-technology: #71bfff;
+  --sector-technology-tint: #15364f;
+  --sector-entrepreneurship: #3bcddc;
+  --sector-entrepreneurship-tint: #003b41;
+  --sector-makerspace: #f99c7c;
+  --sector-makerspace-tint: #4c271a;
+  --sector-education: #a1b1ff;
+  --sector-education-tint: #2a3051;
+  --sector-economics: #44d0c1;
+  --sector-economics-tint: #003c37;
+  --sector-finance: #dbb155;
+  --sector-finance-tint: #413007;
+  --sector-health: #6bcf9d;
+  --sector-health-tint: #103c28;
+  --sector-environment: #8dca80;
+  --sector-environment-tint: #213a1c;
+  --sector-culture: #c9a3f5;
+  --sector-culture-tint: #3a2a4b;
+  --sector-government: #e79ad6;
+  --sector-government-tint: #45263f;
+  --sector-politics: #fa969f;
+  --sector-politics-tint: #4d2529;
+  --sector-faith: #efa464;
+  --sector-faith-tint: #492b0f;
+  --sector-other: #aab4c0;
+  --sector-other-tint: #1f3048;
+}
+
+/* Follow the system only when the visitor has not chosen. */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='system'] {
     color-scheme: dark;
-    --bg: #0e1a24;
-    --surface: #15242f;
-    --surface-2: #1c2e3b;
-    --line: #253847;
-    --ink: #e6edf2;
-    --ink-2: #93a4b3;
-    --accent: #6fb3d2;
-    --accent-ink: #0e1a24;
-    --accent-soft: #123240;
-    --live: #8ccfb8;
+
+    --bg: #04162e;
+    --bg-soft: #0a2447;
+    --line: #1a3a66;
+
+    --ink: #eaf2fb;
+    --ink-2: #9db3cf;
+
+    --brand: #002a61;
+    --brand-ink: #ffffff;
+    --brand-soft: #0f2d57;
+    --brand-soft-ink: #87ceeb;
+    --brand-on-bg: #87ceeb;
+
+    --sky: #87ceeb;
+    --sky-deep: #87ceeb;
+
+    --gold: #f5c04a;
+    --gold-ink: #04162e;
+
+    --band-meta: #b9d7f0;
     --danger: #e08a8a;
-    --scrim: rgb(4 10 16 / 0.55);
+    --live: #f5c04a;
+    --gutter-num: var(--ink);
 
-    --heat-0: #142026;
-    --heat-1: #162932;
-    --heat-2: #193441;
-    --heat-3: #1b3f50;
-    --heat-4: #1d4b5f;
+    --scrim: rgb(1 8 18 / 0.6);
+    --shadow-lift: 0 8px 24px -10px rgb(0 0 0 / 0.5), 0 0 0 1px var(--line);
+    --shadow-pill: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 18px -6px rgb(0 0 0 / 0.45);
+    --shadow-sheet: 0 24px 48px -12px rgb(0 0 0 / 0.55), 0 0 0 1px var(--line);
 
-    --sector-technology: #80b7e7;
-    --sector-technology-tint: #1c3041;
-    --sector-entrepreneurship: #64c2cc;
-    --sector-entrepreneurship-tint: #113437;
-    --sector-makerspace: #e39e86;
-    --sector-makerspace-tint: #3f271e;
-    --sector-education: #a0adeb;
-    --sector-education-tint: #282c42;
-    --sector-economics: #68c4b8;
-    --sector-economics-tint: #123430;
-    --sector-finance: #cbad6d;
-    --sector-finance-tint: #372c15;
-    --sector-health: #7cc39d;
-    --sector-health-tint: #1b3427;
-    --sector-environment: #93c089;
-    --sector-environment-tint: #23331f;
-    --sector-culture: #bea3df;
-    --sector-culture-tint: #32293e;
-    --sector-government: #d59cc8;
-    --sector-government-tint: #3a2636;
-    --sector-politics: #e49a9f;
-    --sector-politics-tint: #402527;
-    --sector-faith: #dca476;
-    --sector-faith-tint: #3d2919;
-    --sector-other: #aab2ba;
-    --sector-other-tint: #243039;
+    --heat-0: #04162e;
+    --heat-1: #08223f;
+    --heat-2: #0f2d57;
+    --heat-3: #163b6f;
+    --heat-4: #1d4a8a;
 
-    --shadow-sheet: 0 24px 48px -12px rgb(0 0 0 / 0.5), 0 0 0 1px var(--line);
+    --sector-technology: #71bfff;
+    --sector-technology-tint: #15364f;
+    --sector-entrepreneurship: #3bcddc;
+    --sector-entrepreneurship-tint: #003b41;
+    --sector-makerspace: #f99c7c;
+    --sector-makerspace-tint: #4c271a;
+    --sector-education: #a1b1ff;
+    --sector-education-tint: #2a3051;
+    --sector-economics: #44d0c1;
+    --sector-economics-tint: #003c37;
+    --sector-finance: #dbb155;
+    --sector-finance-tint: #413007;
+    --sector-health: #6bcf9d;
+    --sector-health-tint: #103c28;
+    --sector-environment: #8dca80;
+    --sector-environment-tint: #213a1c;
+    --sector-culture: #c9a3f5;
+    --sector-culture-tint: #3a2a4b;
+    --sector-government: #e79ad6;
+    --sector-government-tint: #45263f;
+    --sector-politics: #fa969f;
+    --sector-politics-tint: #4d2529;
+    --sector-faith: #efa464;
+    --sector-faith-tint: #492b0f;
+    --sector-other: #aab4c0;
+    --sector-other-tint: #1f3048;
   }
 }
 
-/* The same dark values, applied unconditionally when the visitor picks dark. */
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --bg: #0e1a24;
-  --surface: #15242f;
-  --surface-2: #1c2e3b;
-  --line: #253847;
-  --ink: #e6edf2;
-  --ink-2: #93a4b3;
-  --accent: #6fb3d2;
-  --accent-ink: #0e1a24;
-  --accent-soft: #123240;
-  --live: #8ccfb8;
-  --danger: #e08a8a;
-  --scrim: rgb(4 10 16 / 0.55);
-
-  --heat-0: #142026;
-  --heat-1: #162932;
-  --heat-2: #193441;
-  --heat-3: #1b3f50;
-  --heat-4: #1d4b5f;
-
-  --sector-technology: #80b7e7;
-  --sector-technology-tint: #1c3041;
-  --sector-entrepreneurship: #64c2cc;
-  --sector-entrepreneurship-tint: #113437;
-  --sector-makerspace: #e39e86;
-  --sector-makerspace-tint: #3f271e;
-  --sector-education: #a0adeb;
-  --sector-education-tint: #282c42;
-  --sector-economics: #68c4b8;
-  --sector-economics-tint: #123430;
-  --sector-finance: #cbad6d;
-  --sector-finance-tint: #372c15;
-  --sector-health: #7cc39d;
-  --sector-health-tint: #1b3427;
-  --sector-environment: #93c089;
-  --sector-environment-tint: #23331f;
-  --sector-culture: #bea3df;
-  --sector-culture-tint: #32293e;
-  --sector-government: #d59cc8;
-  --sector-government-tint: #3a2636;
-  --sector-politics: #e49a9f;
-  --sector-politics-tint: #402527;
-  --sector-faith: #dca476;
-  --sector-faith-tint: #3d2919;
-  --sector-other: #aab2ba;
-  --sector-other-tint: #243039;
-
-  --shadow-sheet: 0 24px 48px -12px rgb(0 0 0 / 0.5), 0 0 0 1px var(--line);
-}
-
-/* Expose the tokens to Tailwind so bg-bg / text-ink / border-line all
-   switch with the theme automatically. */
 @theme inline {
   --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
+  --color-bg-soft: var(--bg-soft);
   --color-line: var(--line);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
-  --color-accent: var(--accent);
-  --color-accent-ink: var(--accent-ink);
-  --color-accent-soft: var(--accent-soft);
-  --color-live: var(--live);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-sky: var(--sky);
+  --color-sky-deep: var(--sky-deep);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-band-meta: var(--band-meta);
   --color-danger: var(--danger);
-  --color-heat-0: var(--heat-0);
-  --color-heat-1: var(--heat-1);
-  --color-heat-2: var(--heat-2);
-  --color-heat-3: var(--heat-3);
-  --color-heat-4: var(--heat-4);
   --font-sans: var(--font-sans);
   --radius-pill: var(--r-pill);
   --radius-sheet: var(--r-sheet);
   --radius-image: var(--r-image);
+  --radius-card: var(--r-card);
   --radius-cell: var(--r-cell);
   --radius-thumb: var(--r-thumb);
-  --shadow-pill: var(--shadow-pill);
-  --shadow-sheet: var(--shadow-sheet);
 }

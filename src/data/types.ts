@@ -73,10 +73,14 @@ export type CalEvent = {
   venue: string | null;
   address: string | null;
   locality: string | null;
+  /** The location names a screen rather than a place; excluded from the map. */
+  online: boolean;
   coords: { lat: number; lng: number } | null;
   image: string | null;
   orgName: string;
   orgLogo: string | null;
+  /** Two letters for the avatar, derived from the organizer or the venue. */
+  initials: string;
   /** In category-map order. */
   sectors: SectorId[];
   primarySector: SectorId;

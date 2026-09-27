@@ -83,7 +83,7 @@ export function ErrorState({ city, onRetry }: { city: string; onRetry: () => voi
         type="button"
         onClick={onRetry}
         className="t-body mt-6 rounded-[var(--r-pill)] px-5 py-2.5"
-        style={{ background: 'var(--accent)', color: 'var(--accent-ink)' }}
+        style={{ background: 'var(--brand-on-bg)', color: 'var(--brand-ink)' }}
       >
         Try again
       </button>
@@ -122,7 +122,7 @@ export function EmptyState({
             type="button"
             onClick={onSearchAllDates}
             className="t-body underline"
-            style={{ color: 'var(--accent)', textUnderlineOffset: '2px', minHeight: 44 }}
+            style={{ color: 'var(--brand-on-bg)', textUnderlineOffset: '2px', minHeight: 44 }}
           >
             Search all dates
           </button>
@@ -137,7 +137,7 @@ export function EmptyState({
                 type="button"
                 onClick={() => onRelax(r)}
                 className="t-body w-full rounded-[var(--r-pill)] border px-4 py-2.5"
-                style={{ borderColor: 'var(--line)', background: 'var(--surface)', color: 'var(--ink)' }}
+                style={{ borderColor: 'var(--line)', background: 'var(--bg)', color: 'var(--ink)' }}
               >
                 {r.label}
               </button>
@@ -167,7 +167,7 @@ export function StaleBanner({ newest }: { newest: Date }) {
   return (
     <p
       className="t-meta mt-3 rounded-[var(--r-cell)] px-3 py-2"
-      style={{ background: 'var(--surface-2)', color: 'var(--ink-2)' }}
+      style={{ background: 'var(--bg-soft)', color: 'var(--ink-2)' }}
     >
       Listings were last updated {relativeTime(newest)}. Check the event page before you go.
     </p>
@@ -179,7 +179,7 @@ export function SnapshotBanner({ takenOn }: { takenOn: string | null }) {
   return (
     <p
       className="t-meta mt-3 flex items-center gap-2 rounded-[var(--r-cell)] px-3 py-2"
-      style={{ background: 'var(--surface-2)', color: 'var(--ink-2)' }}
+      style={{ background: 'var(--bg-soft)', color: 'var(--ink-2)' }}
     >
       <WifiOff size={16} strokeWidth={1.5} aria-hidden className="shrink-0" />
       <span>
@@ -195,7 +195,7 @@ export function OfflineBanner() {
   return (
     <p
       className="t-meta mt-3 flex items-center gap-2 rounded-[var(--r-cell)] px-3 py-2"
-      style={{ background: 'var(--surface-2)', color: 'var(--ink-2)' }}
+      style={{ background: 'var(--bg-soft)', color: 'var(--ink-2)' }}
     >
       <WifiOff size={16} strokeWidth={1.5} aria-hidden />
       Offline. Showing events from your last visit.

@@ -13,7 +13,7 @@ import { WHEN_OPTIONS, segmentClass, whenLabel } from './pillShared';
  * the first idle tick, so the interaction is still instant.
  */
 const popupStyle: React.CSSProperties = {
-  background: 'var(--surface)',
+  background: 'var(--bg)',
   borderRadius: 'var(--r-sheet)',
   boxShadow: 'var(--shadow-sheet)',
   padding: 8,
@@ -41,7 +41,7 @@ function OptionList({
             className="t-body w-full rounded-[var(--r-cell)] px-3 py-2 text-left"
             style={{
               color: 'var(--ink)',
-              background: selected === o.id ? 'var(--accent-soft)' : 'transparent',
+              background: selected === o.id ? 'var(--brand-soft)' : 'transparent',
               minHeight: 44,
             }}
           >

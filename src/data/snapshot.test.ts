@@ -43,8 +43,13 @@ describe('the committed Baltimore snapshot', () => {
     expect(events.length).toBeGreaterThan(1600);
   });
 
-  it('reports 105 organizers', () => {
-    expect(organizerCount(events)).toBe(105);
+  it('reports 104 organizers, the 105 raw names with the two Luma handles merged', () => {
+    // The feed carries 105 distinct organizer strings, two of which are
+    // internal handles ("Luma User cTlmPNsi6jHYweP"). Both now display as
+    // "Independent organizer", so they count once.
+    expect(organizerCount(events)).toBe(104);
+    expect(events.some((e) => /^Luma User/i.test(e.orgName))).toBe(false);
+    expect(events.some((e) => e.orgName === 'Independent organizer')).toBe(true);
   });
 
   it('puts 105 events on Saturday 26 September, the busiest day', () => {
@@ -96,11 +101,32 @@ describe('the committed Baltimore snapshot', () => {
     expect(bySector.get('technology')).toBeGreaterThan(60);
   });
 
-  it('can place 47% of events on the map and no more', () => {
+  it('places 773 events, the 798 with coordinates less the 25 that are online', () => {
     const all = normalizeEvents(rows, { tz: ET, now: new Date('2000-01-01T00:00:00Z') });
-    expect(countMappable(all)).toBe(798);
+    // 798 rows carry coordinates, but 25 of those name a screen rather than a
+    // place, and an online event has nothing to pin.
+    expect(countMappable(all)).toBe(773);
+    expect(all.filter((e) => e.online)).toHaveLength(70);
+    expect(all.filter((e) => e.online && e.coords !== null)).toHaveLength(0);
     // The map note has to account for the rest.
-    expect(all.length - countMappable(all)).toBe(897);
+    expect(all.length - countMappable(all)).toBe(922);
+  });
+
+  it('cleans the titles that the sources shout', () => {
+    // "BLACKBIRD FORUM: Reshaping..." and friends.
+    const shouty = events.filter((e) => {
+      const letters = [...e.title].filter((c) => /\p{L}/u.test(c));
+      if (letters.length < 8) return false;
+      return letters.filter((c) => /\p{Lu}/u.test(c)).length / letters.length >= 0.6;
+    });
+    expect(shouty.map((e) => e.title)).toEqual([]);
+  });
+
+  it('gives every event two initials for its avatar', () => {
+    for (const e of events) {
+      expect(e.initials.length).toBeGreaterThan(0);
+      expect(e.initials.length).toBeLessThanOrEqual(2);
+    }
   });
 
   it('finds no Code Collective featured events, so the strip must handle absence', () => {

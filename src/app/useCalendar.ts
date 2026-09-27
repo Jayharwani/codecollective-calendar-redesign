@@ -44,6 +44,8 @@ export type Calendar = {
   cityLabel: string;
   tzLabel: string;
   todayKey: string;
+  /** 0 = Sunday, in the city's zone. */
+  todayWeekday: number;
   now: Date;
   /** Every listed event, before filtering. */
   events: CalEvent[];
@@ -148,6 +150,7 @@ export function useCalendar(): Calendar {
     cityLabel: city.label,
     tzLabel: url.viewerTz ? 'your time' : city.tzLabel,
     todayKey,
+    todayWeekday,
     now,
     events,
     organizers,

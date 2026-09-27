@@ -1,3 +1,4 @@
+import { cleanOrganizer, cleanTitle, initialsFor, looksOnline } from './display';
 import { sectorsForTags, inMapOrder } from './sectors';
 import { FEED_ZONE, dayKeyOf, hourInZone, minutesInZone, parseInstant } from './time';
 import type { CalEvent, RawEvent, RawLocation, SectorId } from './types';
@@ -193,11 +194,16 @@ export function normalizeEvent(raw: RawEvent, opts: NormalizeOptions): CalEvent 
   const sectors: SectorId[] = inMapOrder(sectorsForTags(tags));
 
   const loc = normalizeLocation(raw.location);
-  const orgName = cleanText(raw.org_name || raw.orgName) || 'Unknown organizer';
+  // Display hygiene: the raw strings stay available through "Copy event
+  // details", but nobody should have to read a shouted title or an internal
+  // user handle where an organizer's name belongs.
+  const rawOrg = cleanText(raw.org_name || raw.orgName) || 'Unknown organizer';
+  const orgName = cleanOrganizer(rawOrg);
+  const online = looksOnline(loc.venue, loc.address, loc.locality);
 
   return {
     key: eventKey(raw),
-    title: cleanText(raw.name) || 'Untitled event',
+    title: cleanTitle(cleanText(raw.name)) || 'Untitled event',
     descriptionMd,
     excerpt: toExcerpt(descriptionMd),
     start,
@@ -211,10 +217,13 @@ export function normalizeEvent(raw: RawEvent, opts: NormalizeOptions): CalEvent 
     venue: loc.venue,
     address: loc.address,
     locality: loc.locality,
-    coords: loc.coords,
+    online,
+    // An online event has no place to pin, so it never reaches the map.
+    coords: online ? null : loc.coords,
     image: absoluteImage(raw.imageUrl),
     orgName,
     orgLogo: absoluteImage(raw.orgImageUrl),
+    initials: initialsFor(rawOrg, loc.venue),
     sectors,
     primarySector: sectors[0] ?? 'other',
     tags,
