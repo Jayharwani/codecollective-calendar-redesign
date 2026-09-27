@@ -48,6 +48,7 @@ const SubscribePopover = lazy(() =>
 const Interlude = lazy(() =>
   import('../components/Interlude/Interlude').then((m) => ({ default: m.Interlude })),
 );
+const PhoneMap = lazy(() => import('../components/MapPanel/MapPanel'));
 
 /* ---------------- error boundary ---------------- */
 
@@ -107,7 +108,10 @@ function Calendar() {
   const isPhone = useMediaQuery('(max-width: 767px)');
   const isWide = useMediaQuery('(min-width: 1280px)');
 
-  const mapOn = url.mapParam ?? true;
+  // The rail's map is on by default on desktop, but a phone visitor should
+  // land on the list and reach the map through the pill, not the other way
+  // round. The URL always wins over both.
+  const mapOn = url.mapParam ?? !isPhone;
   const railVisible = isWide && url.view === 'agenda';
 
   const showToast = useCallback((message: string) => {
@@ -326,6 +330,7 @@ function Calendar() {
         mapOn={mapOn}
         onMap={actions.setMap}
         isPhone={isPhone}
+        isWide={isWide}
         stuck={condensed}
       />
 
@@ -338,8 +343,37 @@ function Calendar() {
           {total === 1 ? '1 event' : `${total} events`}
         </p>
 
-        <div className="flex gap-8">
-          <div className="min-w-0 flex-1">
+        {isPhone && mapOn ? (
+          /* The context rail is a desktop arrangement, not a replacement for
+             the phone map. Here the map takes over the list, as in v1, so the
+             floating pill still has something to toggle. */
+          <div
+            className="pt-4"
+            style={{ height: 'calc(100dvh - var(--band-h) - var(--control-h) - 32px)' }}
+          >
+            <aside
+              aria-label="Map of events"
+              className="h-full overflow-hidden rounded-[var(--r-sheet)]"
+            >
+              <Suspense
+                fallback={<div className="h-full w-full" style={{ background: 'var(--bg-soft)' }} />}
+              >
+                <PhoneMap
+                  events={derived.mappable}
+                  unmappedCount={derived.unmappedCount}
+                  center={getCity(url.city).center}
+                  tz={cal.tz}
+                  selectedKey={url.eventKey}
+                  hoveredKey={hoveredKey}
+                  dark={dark}
+                  onSelect={onSelectFromMap}
+                />
+              </Suspense>
+            </aside>
+          </div>
+        ) : (
+          <div className="flex gap-8">
+            <div className="min-w-0 flex-1">
             {/* The tide line is the list column's own header, beside the list
                 it controls rather than spanning the whole page. */}
             {url.view === 'agenda' && total > 0 && (
@@ -380,9 +414,10 @@ function Calendar() {
               onSelect={onSelectFromMap}
               onPickLocality={(locality) => actions.applyFilters({ near: locality, radiusMiles: 5 })}
               onPickOnline={() => actions.setQuery('online')}
-            />
-          )}
-        </div>
+              />
+            )}
+          </div>
+        )}
       </main>
 
       {/* Phones get a floating toggle rather than a second page. */}

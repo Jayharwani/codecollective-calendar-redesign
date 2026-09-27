@@ -122,16 +122,19 @@ function Body({
           ) : status ? (
             <span
               className="t-caption flex items-center gap-1 rounded-[var(--r-pill)] px-2 py-[2px]"
-              style={{
-                background: status === 'Happening now' ? 'transparent' : 'var(--brand-soft)',
-                color: status === 'Happening now' ? 'var(--live)' : 'var(--brand)',
-              }}
+              // Gold is only ever a filled shape carrying navy text. As ink on
+              // white it measures 1.9:1, which is the reason for that rule.
+              style={
+                status === 'Happening now'
+                  ? { background: 'var(--gold)', color: 'var(--gold-ink)' }
+                  : { background: 'var(--brand-soft)', color: 'var(--brand-soft-ink)' }
+              }
             >
               {status === 'Happening now' && (
                 <span
                   aria-hidden
                   className="live-dot h-2 w-2 rounded-full"
-                  style={{ background: 'var(--live)' }}
+                  style={{ background: 'var(--gold-ink)' }}
                 />
               )}
               {status}
@@ -268,7 +271,7 @@ function Actions({
         target="_blank"
         rel="noopener noreferrer"
         className="t-meta flex items-center gap-2 rounded-[var(--r-pill)] px-4 py-2.5"
-        style={{ background: 'var(--brand-on-bg)', color: 'var(--brand-ink)', minHeight: 44 }}
+        style={{ background: 'var(--brand)', color: 'var(--brand-ink)', minHeight: 44 }}
       >
         <ExternalLink size={16} strokeWidth={1.5} aria-hidden />
         View event page

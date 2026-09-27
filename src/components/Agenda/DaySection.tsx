@@ -60,15 +60,22 @@ function TimeGroup({ group, ...rest }: { group: TimeGroupModel } & RowListProps)
         className="t-group flex items-center gap-2 px-3 pt-3 pb-1"
         style={{ color: 'var(--ink-2)' }}
       >
-        {isLive && (
+        {isLive ? (
+          /* Gold as a filled chip, never as a dot or as ink: on white it
+             measures 1.9:1 either way. */
           <span
-            aria-hidden
-            className="live-dot h-2 w-2 rounded-full"
-            style={{ background: 'var(--gold)' }}
-          />
+            className="live-dot flex items-center gap-1.5 rounded-[var(--r-pill)] px-2 py-[2px]"
+            style={{ background: 'var(--gold)', color: 'var(--gold-ink)' }}
+          >
+            {group.label}
+            <span className="tnum">{group.events.length}</span>
+          </span>
+        ) : (
+          <>
+            <span>{group.label}</span>
+            <span className="tnum">{group.events.length}</span>
+          </>
         )}
-        <span style={isLive ? { color: 'var(--ink)' } : undefined}>{group.label}</span>
-        <span className="tnum">{group.events.length}</span>
       </h3>
       <RowList events={shown} {...rest} />
       {hidden > 0 && (

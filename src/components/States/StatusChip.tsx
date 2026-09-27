@@ -1,6 +1,8 @@
-import { Popover } from '@base-ui/react/popover';
 import { Clock, CloudOff, WifiOff } from 'lucide-react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { relativeTime } from '../../data/time';
+
+const StatusChipPopover = lazy(() => import('./StatusChipPopover'));
 
 /**
  * v1 gave data problems a full-width banner, which cost a whole band above the
@@ -60,41 +62,57 @@ function describe(status: DataStatus): { label: string; body: string; Icon: type
 }
 
 export function StatusChip({ status }: { status: DataStatus }) {
+  const [ready, setReady] = useState(false);
+  const [pending, setPending] = useState(false);
+
+  // Swap the popover in on the first idle tick, so its 33 KB of Base UI
+  // machinery never sits on the critical path for a chip in the brand band.
+  useEffect(() => {
+    const ric = (
+      globalThis as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }
+    ).requestIdleCallback;
+    if (typeof ric === 'function') {
+      const id = ric(() => setReady(true), { timeout: 2000 });
+      return () =>
+        (globalThis as { cancelIdleCallback?: (h: number) => void }).cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(() => setReady(true), 400);
+    return () => clearTimeout(t);
+  }, []);
+
   const detail = describe(status);
   if (!detail) return null;
   const { label, body, Icon } = detail;
 
+  const inner = (
+    <>
+      <Icon size={12} strokeWidth={2} aria-hidden />
+      {label}
+    </>
+  );
+
+  if (ready) {
+    return (
+      <Suspense fallback={null}>
+        <StatusChipPopover trigger={inner} body={body} openOnMount={pending} />
+      </Suspense>
+    );
+  }
+
+  // Before the chunk lands the chip still reads, and the full sentence is
+  // available as a tooltip rather than being lost.
   return (
-    <Popover.Root>
-      <Popover.Trigger
-        className="t-caption ml-2 inline-flex items-center gap-1.5 rounded-[var(--r-pill)] px-2.5 align-middle"
-        style={{
-          minHeight: 26,
-          background: 'rgb(135 206 235 / 0.14)',
-          color: 'var(--sky)',
-        }}
-      >
-        <Icon size={12} strokeWidth={2} aria-hidden />
-        {label}
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Positioner sideOffset={8} align="start">
-          <Popover.Popup
-            className="t-meta"
-            style={{
-              maxWidth: 320,
-              padding: '12px 14px',
-              background: 'var(--bg)',
-              color: 'var(--ink)',
-              borderRadius: 'var(--r-cell)',
-              boxShadow: 'var(--shadow-sheet)',
-              zIndex: 70,
-            }}
-          >
-            {body}
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
+    <button
+      type="button"
+      title={body}
+      onClick={() => {
+        setPending(true);
+        setReady(true);
+      }}
+      className="t-caption ml-2 inline-flex items-center gap-1.5 rounded-[var(--r-pill)] px-2.5 align-middle"
+      style={{ minHeight: 26, background: 'rgb(135 206 235 / 0.14)', color: 'var(--sky)' }}
+    >
+      {inner}
+    </button>
   );
 }

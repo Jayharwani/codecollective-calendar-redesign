@@ -53,7 +53,10 @@ function Poster({ event, tz }: { event: CalEvent; tz: string }) {
         color: `var(--sector-${event.primarySector})`,
       }}
     >
-      <span className="leading-none" style={{ fontStretch: '75%', fontWeight: 600 }}>
+      <span
+        className="leading-none"
+        style={{ fontStretch: '75%', fontWeight: 600, color: 'var(--ink)' }}
+      >
         <span className="block" style={{ fontSize: 15, lineHeight: '18px' }}>
           {weekday}
         </span>
@@ -65,8 +68,10 @@ function Poster({ event, tz }: { event: CalEvent; tz: string }) {
         <span
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
           style={{
-            background: `var(--sector-${event.primarySector})`,
-            color: `var(--sector-${event.primarySector}-tint)`,
+            // Same pairing as the row avatar: the tint carries the sector,
+            // ink carries the letters. The inverse measures about 4.3:1.
+            background: 'var(--bg)',
+            color: 'var(--ink)',
             fontSize: 11,
             fontWeight: 600,
           }}

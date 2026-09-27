@@ -114,12 +114,14 @@ for (const theme of ['light', 'dark'] as const) {
   });
 }
 
-test('map view', async ({ page }) => {
-  // Below 1280 the map replaces the list, so there are no day sections to wait
-  // for; the canvas is the readiness signal either way.
+test('context rail, with the map in it', async ({ page }) => {
+  // The rail needs room: it only exists from 1280 up, and a scrollbar can put
+  // a nominal 1280 viewport just under that.
+  await page.setViewportSize({ width: 1400, height: 900 });
   await page.goto('/?city=baltimore&map=1');
-  await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 60_000 });
-  await scan(page, 'map', { include: 'aside[aria-label="Map of events"]' });
+  const rail = page.getByRole('complementary', { name: 'Event context' });
+  await expect(rail).toBeVisible({ timeout: 60_000 });
+  await scan(page, 'context rail', { include: 'aside[aria-label="Event context"]' });
 });
 
 test('the page chrome, with no agenda behind it', async ({ page }) => {

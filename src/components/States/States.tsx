@@ -83,7 +83,7 @@ export function ErrorState({ city, onRetry }: { city: string; onRetry: () => voi
         type="button"
         onClick={onRetry}
         className="t-body mt-6 rounded-[var(--r-pill)] px-5 py-2.5"
-        style={{ background: 'var(--brand-on-bg)', color: 'var(--brand-ink)' }}
+        style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
       >
         Try again
       </button>

@@ -29,8 +29,8 @@ Then open <http://localhost:5173/?city=baltimore>.
 | `npm run dev` | Vite dev server |
 | `npm run build` | Typecheck, then a production build into `dist/` |
 | `npm run build:preview` | The hosted preview bundle, relative URLs plus a concept banner |
-| `npm test` | 147 unit tests |
-| `npm run test:e2e` | 80 Playwright tests, desktop and phone, including axe |
+| `npm test` | 169 unit tests |
+| `npm run test:e2e` | 78 Playwright tests, desktop and phone, including axe |
 | `npm run typecheck` | TypeScript only |
 
 Two environment variables, both optional:
@@ -101,29 +101,65 @@ never loads unless the map is shown.
 
 ## The design
 
-The identity is Baltimore's harbor: marble-stoop white, tidewater blue,
-harbor-night navy. Calm and cool, with the boldness spent in one place.
+Three layers, and only one is loud at a time. v1 stacked five full-width bands
+before the first event and gave each of them equal weight; the first listing
+started halfway down the screen and nothing led the eye.
 
-**The tide line** is that place. A strip of the next 60 days whose bars rise and
-fall with how busy each day is, like a tide chart. Bar height is
-`4 + 28 × √(count ÷ max)`; the square root is load-bearing, because a 105-event
-Saturday against a 15-event Tuesday flattens every other day on a linear scale.
-The bars follow the current filters, so choosing Technology redraws the whole
-coastline.
+| Layer | Job | Surface |
+|---|---|---|
+| Brand band | Identity, place, search | Collective Blue, scrolls away into a 64px bar |
+| Control bar | What am I looking at | White, frosted when stuck, sticky |
+| Content | The events | White list, a sticky date gutter, a context rail |
 
-Everything else stays quiet. Rows are time-first rather than image-first,
-because an event is chosen by when it happens, not by how it looks. Sector
-colour appears only as an 8px dot, a chip, or a map point — never as a filled
-event block. The palette is generated in OKLCH at equal lightness and chroma so
-no sector shouts louder than another, which replaces a live category map that
-currently ships pure black for Faith, pure white for Economics, and two
-near-identical blues for Technology and Education.
+The navy band gives the page a rich top; the content below is calm and bright.
+That contrast is where the energy comes from, rather than from decoration.
 
-Type is one superfamily, Instrument Sans Variable, used across two axes: the
-width axis carries dense date and time data at 75–85%, and normal width carries
-reading text. Every date, time and count is tabular.
+### Colour
 
----
+Collective Blue, Sky Highlight and White come from Code Collective's own brand
+page. The accent is the **Calvert gold of the Baltimore city flag**, and it has
+exactly one job: *now*. It appears on today's coin in the date gutter, today's
+coin in the tide line, and the "Happening now" chip. Three places, never more,
+and only ever as a filled shape carrying navy text, because gold ink on white
+measures 1.9:1.
+
+Roughly 70% of the screen is calm neutral, 20% Collective Blue, 8% sector
+colour, 2% gold.
+
+### The tide line
+
+Still the signature element, but no longer a band of its own: it is the list
+column's header, beside the list it controls. Bar height is
+`3 + 21 × √(count ÷ max)`; the square root is load-bearing, because a
+105-event Saturday against a 15-event Tuesday flattens every other day on a
+linear scale. Selecting a sector recolours every bar to that sector and springs
+them to the new counts in one motion. That handoff is the page's main moment.
+
+### The list
+
+Day headers are gone as full-width bands. Each day is a two-column grid: a 96px
+sticky gutter carrying the weekday, a 32px numeral, a relative label and a
+count, then the rows beside it. The date stays legible while you read the day,
+and the list is one continuous column instead of a stack of banded sections.
+
+Rows dropped from three meta lines to one and from a 64px tile to a 44px
+visual, which roughly doubled the density: **seven events now fit at 1440×900
+where v1 fit three**. The visual falls back image → organizer logo → initials
+avatar, and never to a generic sector icon: 32% of the feed has no image, so a
+repeated placeholder would have defined the look of the page.
+
+### The context rail
+
+At 1280 and up, a sticky column holds the map as a card and "Where it's
+happening" beneath it. The rail is never empty. When tiles cannot load the map
+card collapses to a 72px note and the panel moves up, which matters because
+only 47% of the feed carries coordinates and a map alone never tells the whole
+location story. Below 1280 the panel moves into the Filters sheet; on a phone
+the map takes over the list behind the floating pill.
+
+Type is one superfamily, Instrument Sans Variable, across two axes: condensed
+widths carry dense date and time data, normal width carries reading text. In
+each zone exactly one element is weight 600.
 
 ## What the data actually looks like
 
@@ -162,6 +198,15 @@ differently in Denver than in Baltimore. They are parsed in the scrapers' zone.
 
 **Plain text arrives HTML-encoded.** Fifteen titles and ten location fields
 carry things like `&#038;` and `&#8217;`, which rendered literally.
+
+On top of those, three display-only transforms. Shouted titles are recased,
+either when a title opens with two or more all-caps words or when it is 60% or
+more uppercase, against an allowlist that keeps AI, UX, UMBC and anything with
+a digit intact. The two `Luma User <handle>` organizers become "Independent
+organizer", and their avatars take initials from the venue instead. Seventy
+events whose location names a screen rather than a place are chipped "Online"
+and kept off the map, which is why the mappable count is 773 rather than the
+798 that carry coordinates. Every raw value survives in "Copy event details".
 
 Technology being 4% of the listings is why the sector rail is ordered
 mission-first rather than by volume: it is why someone opens a calendar branded
@@ -211,11 +256,17 @@ Lighthouse against a production build:
 
 | | Desktop | Mobile |
 |---|---|---|
-| Performance | 97 | 83 |
+| Performance | 96 | 79 |
 | Accessibility | 100 | 100 |
-| LCP | 1.1s | 4.4s |
+| LCP | 0.5s | 4.5s |
 | CLS | 0 | 0 |
-| Total blocking time | 0ms | 60ms |
+| Total blocking time | 130ms | 100ms |
+
+Initial JavaScript is **151.5 KB gzipped** against a 170 KB budget. Two things
+had to be pushed off the critical path to keep it there: Base UI's popover,
+which the status chip in the brand band would otherwise have loaded on every
+visit for 33 KB, and the same library's Switch, replaced with a plain
+`role="switch"` button for the map toggle.
 
 Mobile LCP misses the 2.0s target, and the reason is structural rather than
 fixable from here. Lighthouse's mobile profile applies a 4× CPU slowdown, and
@@ -265,6 +316,9 @@ off.
 | `start`/`end` carry the time-of-day chips | A new `tod` parameter, with `start`/`end` still read and written | One window cannot express "Morning and Evening" |
 | Cancelled row at 60% opacity | Struck through and badged | 60% opacity fails AA |
 | GitHub icon in the footer | A text link | lucide 1.48 dropped brand icons |
+| v2: a gold dot on the "Happening now" group | A filled gold chip | A gold dot on white is 1.9:1, and the brief forbids gold dots outright |
+| v2: initials in the sector colour on its tint | Ink on the tint | Sector-on-tint measures about 4.4:1, just under the threshold; the tint still carries the sector |
+| v2: Map switch at every desktop width | Hidden below 1280 | There is no context rail to toggle below 1280, so the control did nothing |
 
 ---
 

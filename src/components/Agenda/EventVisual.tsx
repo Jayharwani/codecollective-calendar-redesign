@@ -64,7 +64,9 @@ export function EventVisual({ event, size = 44 }: { event: CalEvent; size?: numb
         width: size,
         height: size,
         background: `var(--sector-${event.primarySector}-tint)`,
-        color: `var(--sector-${event.primarySector})`,
+        // Ink, not the sector colour: sector-on-tint measures about 4.4:1,
+        // just under the threshold. The tint still carries the sector.
+        color: 'var(--ink)',
         fontSize: Math.round(size * 0.34),
         fontWeight: 600,
         letterSpacing: '0.01em',

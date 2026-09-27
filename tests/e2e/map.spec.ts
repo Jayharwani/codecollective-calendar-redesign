@@ -25,8 +25,10 @@ test('the map worker loads and tiles are fetched', async ({ page }) => {
     }
   });
 
+  // Desktop puts the map in the context rail, phones swap it for the list.
+  // Either way `map=1` has to produce a canvas.
   await page.goto('/?city=baltimore&map=1');
-  await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 45_000 });
+  await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 60_000 });
 
   // Give the worker time to spin up and request its first tiles.
   await expect
@@ -60,8 +62,10 @@ test('the map worker loads and tiles are fetched', async ({ page }) => {
 });
 
 test('the map note counts what cannot be placed', async ({ page }) => {
+  // Desktop puts the map in the context rail, phones swap it for the list.
+  // Either way `map=1` has to produce a canvas.
   await page.goto('/?city=baltimore&map=1');
-  await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 45_000 });
+  await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 60_000 });
 
   // 47% of the feed carries coordinates, so this is never zero in practice.
   const note = page.getByText(/Not on map: \d+ events without a mapped location/);
@@ -69,7 +73,9 @@ test('the map note counts what cannot be placed', async ({ page }) => {
 });
 
 test('OpenStreetMap attribution stays visible', async ({ page }) => {
+  // Desktop puts the map in the context rail, phones swap it for the list.
+  // Either way `map=1` has to produce a canvas.
   await page.goto('/?city=baltimore&map=1');
-  await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 45_000 });
+  await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 60_000 });
   await expect(page.locator('.maplibregl-ctrl-attrib')).toContainText('OpenStreetMap');
 });

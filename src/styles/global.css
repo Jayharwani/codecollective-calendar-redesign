@@ -299,7 +299,10 @@
   }
 }
 
-.live-dot {
+/* The breathing beat, on the small dot inside a live chip rather than on the
+   chip itself: pulsing a filled shape would pulse its text too. */
+.live-dot > span:first-child,
+span.live-dot.h-2 {
   animation: cc-breathe 2.4s ease-in-out infinite;
 }
 

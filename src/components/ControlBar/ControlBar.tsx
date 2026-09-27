@@ -1,4 +1,3 @@
-import { Switch } from '@base-ui/react/switch';
 import { SlidersHorizontal } from 'lucide-react';
 import { SectorRail } from '../SectorRail/SectorRail';
 import type { LensId } from '../../data/types';
@@ -14,6 +13,8 @@ export type ControlBarProps = {
   mapOn: boolean;
   onMap: (on: boolean) => void;
   isPhone: boolean;
+  /** The context rail only exists at 1280 and up, and so does its switch. */
+  isWide: boolean;
   /** True once the band above has condensed, which frosts this bar. */
   stuck: boolean;
 };
@@ -33,6 +34,7 @@ export function ControlBar({
   mapOn,
   onMap,
   isPhone,
+  isWide,
   stuck,
 }: ControlBarProps) {
   return (
@@ -110,34 +112,45 @@ export function ControlBar({
                 ))}
               </div>
 
-              <label className="flex shrink-0 items-center gap-2" style={{ minHeight: 40 }}>
-                <span className="t-meta" style={{ color: 'var(--ink-2)' }}>
-                  Map
-                </span>
-                <Switch.Root
-                  checked={mapOn}
-                  onCheckedChange={onMap}
-                  className="shrink-0 rounded-[var(--r-pill)]"
-                  style={{
-                    width: 40,
-                    height: 24,
-                    padding: 3,
-                    background: mapOn ? 'var(--brand)' : 'var(--bg-soft)',
-                    border: `1px solid ${mapOn ? 'var(--brand)' : 'var(--line)'}`,
-                  }}
+              {/* Below 1280 there is no rail to toggle, so the control would
+                  do nothing visible. */}
+              {/* A plain role="switch" button rather than Base UI's Switch.
+                  Importing it here pulled 33 KB of shared Base UI machinery
+                  onto the critical path for one toggle. */}
+              {isWide && (
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={mapOn}
+                  onClick={() => onMap(!mapOn)}
+                  className="flex shrink-0 items-center gap-2"
+                  style={{ minHeight: 40, color: 'var(--ink-2)' }}
                 >
-                  <Switch.Thumb
-                    className="block rounded-full"
+                  <span className="t-meta">Map</span>
+                  <span
+                    aria-hidden
+                    className="block shrink-0 rounded-[var(--r-pill)]"
                     style={{
-                      width: 16,
-                      height: 16,
-                      background: mapOn ? 'var(--brand-ink)' : 'var(--ink-2)',
-                      transform: mapOn ? 'translateX(16px)' : 'translateX(0)',
-                      transition: 'transform 0.16s ease',
+                      width: 40,
+                      height: 24,
+                      padding: 3,
+                      background: mapOn ? 'var(--brand)' : 'var(--bg-soft)',
+                      border: `1px solid ${mapOn ? 'var(--brand)' : 'var(--line)'}`,
                     }}
-                  />
-                </Switch.Root>
-              </label>
+                  >
+                    <span
+                      className="block rounded-full"
+                      style={{
+                        width: 16,
+                        height: 16,
+                        background: mapOn ? 'var(--brand-ink)' : 'var(--ink-2)',
+                        transform: mapOn ? 'translateX(16px)' : 'translateX(0)',
+                        transition: 'transform 0.16s ease',
+                      }}
+                    />
+                  </span>
+                </button>
+              )}
             </>
           )}
         </div>

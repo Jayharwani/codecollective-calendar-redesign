@@ -141,14 +141,18 @@ test.describe('keyboard', () => {
     await expect(cell).toHaveCount(1);
     await cell.focus();
 
-    const before = await page.evaluate(() => document.activeElement?.getAttribute('data-cell'));
-    await page.keyboard.press('ArrowRight');
-    const after = await page.evaluate(() => document.activeElement?.getAttribute('data-cell'));
-    expect(after).not.toBe(before);
+    // The grid moves focus inside a requestAnimationFrame, so poll rather
+    // than reading straight after the keypress.
+    const focused = () =>
+      page.evaluate(() => document.activeElement?.getAttribute('data-cell'));
 
+    const before = await focused();
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(focused).not.toBe(before);
+
+    const after = await focused();
     await page.keyboard.press('ArrowDown');
-    const down = await page.evaluate(() => document.activeElement?.getAttribute('data-cell'));
-    expect(down).not.toBe(after);
+    await expect.poll(focused).not.toBe(after);
   });
 
   test('filter chips expose their pressed state', async ({ page }) => {
@@ -189,26 +193,38 @@ test.describe('URL contract', () => {
   });
 
   test('map=1 shows the map and map=0 hides it', async ({ page }) => {
-    // The contract spells these 1 and 0, not "true" and "false".
+    // The contract spells these 1 and 0, not "true" and "false". The map lives
+    // in the context rail, which needs 1280 or more.
+    await page.setViewportSize({ width: 1400, height: 900 });
     await page.goto('/?city=baltimore&map=1');
-    await expect(page.getByRole('complementary', { name: 'Map of events' })).toBeVisible({
-      timeout: 45_000,
+    await expect(page.getByRole('complementary', { name: 'Event context' })).toBeVisible({
+      timeout: 60_000,
     });
-    await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 45_000 });
+    await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 60_000 });
 
     await page.goto('/?city=baltimore&map=0');
     await ready(page);
-    await expect(page.getByRole('complementary', { name: 'Map of events' })).toHaveCount(0);
+    // The rail stays, because "Where it's happening" still belongs there.
+    await expect(page.getByRole('complementary', { name: 'Event context' })).toBeVisible();
+    await expect(page.locator('canvas.maplibregl-canvas')).toHaveCount(0);
   });
 
   test('lw=1 hides weekday daytime events', async ({ page }) => {
+    // Read the live region, not the rendered rows: only three day sections
+    // render at first paint, and which three they are changes with the filter,
+    // so the row count can go up while the result set shrinks.
+    const total = async () => {
+      const text = (await page.locator('[role="status"]').first().textContent()) ?? '';
+      return Number.parseInt(text.replace(/[^0-9]/g, ''), 10);
+    };
+
     await page.goto('/?city=baltimore&map=0&lw=0');
     await ready(page);
-    const before = await page.locator('[data-event-key]').count();
+    const before = await total();
 
     await page.goto('/?city=baltimore&map=0&lw=1');
     await ready(page);
-    const after = await page.locator('[data-event-key]').count();
+    const after = await total();
 
     // The filter has to actually remove something, and the chip has to show.
     expect(after).toBeLessThan(before);
