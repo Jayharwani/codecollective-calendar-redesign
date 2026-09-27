@@ -150,6 +150,14 @@ export default function MapPanel({
           console.warn('Map error', e);
         });
 
+        // If the basemap never arrives, say so rather than leaving an empty
+        // rectangle. A sandboxed frame may not be allowed to reach the tile
+        // host at all.
+        const styleWatchdog = setTimeout(() => {
+          if (!cancelled && !map.isStyleLoaded()) setFailed(true);
+        }, 12_000);
+        map.on('styledata', () => clearTimeout(styleWatchdog));
+
         map.on('load', () => {
           if (cancelled) return;
           retint(map, dark);

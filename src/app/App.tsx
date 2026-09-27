@@ -25,6 +25,7 @@ import {
   ErrorState,
   MetaSkeleton,
   OfflineBanner,
+  SnapshotBanner,
   StaleBanner,
   TideSkeleton,
 } from '../components/States/States';
@@ -416,7 +417,10 @@ function Calendar() {
                 Times in {cal.tzLabel}.
               </p>
               {cal.fromCache && <OfflineBanner />}
-              {stale && cal.newestScrapeAt && <StaleBanner newest={cal.newestScrapeAt} />}
+              {cal.feedSource === 'snapshot' && <SnapshotBanner takenOn={cal.snapshotDate} />}
+              {stale && cal.feedSource !== 'snapshot' && cal.newestScrapeAt && (
+                <StaleBanner newest={cal.newestScrapeAt} />
+              )}
             </div>
             <div className="w-full lg:w-auto lg:min-w-[520px]">{pill}</div>
           </div>

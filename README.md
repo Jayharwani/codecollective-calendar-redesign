@@ -29,7 +29,7 @@ Then open <http://localhost:5173/?city=baltimore>.
 | `npm run dev` | Vite dev server |
 | `npm run build` | Typecheck, then a production build into `dist/` |
 | `npm run build:preview` | The hosted preview bundle, relative URLs plus a concept banner |
-| `npm test` | 137 unit tests |
+| `npm test` | 147 unit tests |
 | `npm run test:e2e` | 80 Playwright tests, desktop and phone, including axe |
 | `npm run typecheck` | TypeScript only |
 
@@ -37,6 +37,9 @@ Two environment variables, both optional:
 
 - `VITE_DATA_SOURCE=live|snapshot` — `snapshot` reads the committed
   `public/snapshot/baltimore.json` so the app works with no network.
+- `VITE_SNAPSHOT_FALLBACK=1` — try the live feed first, but fall back to the
+  bundled snapshot rather than the error state when the origin is unreachable.
+  The meta line says which source it got. Off by default.
 - `VITE_BASE` — the mount point for the build. `/` by default, `./` for a
   static host that needs relative URLs.
 

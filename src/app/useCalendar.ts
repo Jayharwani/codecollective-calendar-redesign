@@ -50,6 +50,9 @@ export type Calendar = {
   organizers: number;
   newestScrapeAt: Date | null;
   fromCache: boolean;
+  /** Where the rows came from: the live feed, a session copy, or a snapshot. */
+  feedSource: 'live' | 'session' | 'snapshot';
+  snapshotDate: string | null;
   derived: Derived;
   /** Changes only when a filter changes, so the agenda keeps its scroll depth. */
   resetToken: string;
@@ -149,7 +152,9 @@ export function useCalendar(): Calendar {
     events,
     organizers,
     newestScrapeAt,
-    fromCache: feed.fromCache,
+    fromCache: feed.source === 'session',
+    feedSource: feed.source,
+    snapshotDate: feed.snapshotDate,
     derived,
     resetToken,
     filtersActive: activeFilterCount(url.filters),

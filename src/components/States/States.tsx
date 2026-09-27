@@ -174,6 +174,22 @@ export function StaleBanner({ newest }: { newest: Date }) {
   );
 }
 
+/** Shown when the live feed was unreachable and bundled data is standing in. */
+export function SnapshotBanner({ takenOn }: { takenOn: string | null }) {
+  return (
+    <p
+      className="t-meta mt-3 flex items-center gap-2 rounded-[var(--r-cell)] px-3 py-2"
+      style={{ background: 'var(--surface-2)', color: 'var(--ink-2)' }}
+    >
+      <WifiOff size={16} strokeWidth={1.5} aria-hidden className="shrink-0" />
+      <span>
+        The live feed could not be reached, so this is a saved copy
+        {takenOn ? ` from ${takenOn}` : ''}. Check the event page before you go.
+      </span>
+    </p>
+  );
+}
+
 /** Shown when the fetch failed but this session had a copy. */
 export function OfflineBanner() {
   return (
