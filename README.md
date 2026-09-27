@@ -11,7 +11,13 @@ in a month grid capped at three events per day, so most listings sit behind a
 answers "what is on, when, and is it for me" in one screen, and never puts an
 event somewhere you cannot reach it.
 
-![The agenda at 1440px](shots/agenda-1440-light.png)
+![The agenda at 1440px](shots/v2-agenda-1440-light.png)
+
+<sub>More: [1280 dark](shots/v2-agenda-1280-dark.png) ·
+[390 phone](shots/v2-agenda-390-light.png) ·
+[event sheet](shots/v2-event-sheet-1440.png) ·
+[a sector selected](shots/v2-sector-health-1440.png) ·
+[month](shots/v2-month-1280.png)</sub>
 
 ---
 
@@ -30,7 +36,7 @@ Then open <http://localhost:5173/?city=baltimore>.
 | `npm run build` | Typecheck, then a production build into `dist/` |
 | `npm run build:preview` | The hosted preview bundle, relative URLs plus a concept banner |
 | `npm test` | 169 unit tests |
-| `npm run test:e2e` | 78 Playwright tests, desktop and phone, including axe |
+| `npm run test:e2e` | 79 Playwright tests, desktop and phone, including axe |
 | `npm run typecheck` | TypeScript only |
 
 Two environment variables, both optional:
@@ -154,12 +160,50 @@ At 1280 and up, a sticky column holds the map as a card and "Where it's
 happening" beneath it. The rail is never empty. When tiles cannot load the map
 card collapses to a 72px note and the panel moves up, which matters because
 only 47% of the feed carries coordinates and a map alone never tells the whole
-location story. Below 1280 the panel moves into the Filters sheet; on a phone
-the map takes over the list behind the floating pill.
+location story. The collapse is driven by the first MapLibre error raised
+before the style parses, so it happens in about 250ms rather than waiting out
+the watchdog; a sandboxed frame is refused by the tile host on its very first
+request, and twelve seconds of an empty card is its own kind of broken. Below
+1280 the panel moves into the Filters sheet; on a phone the map takes over the
+list behind the floating pill.
 
 Type is one superfamily, Instrument Sans Variable, across two axes: condensed
 widths carry dense date and time data, normal width carries reading text. In
 each zone exactly one element is weight 600.
+
+### Nothing was removed
+
+The reorganization moved things; it did not delete them. Every element v1 put
+on screen has a named home in v2.
+
+| v1 element | v2 home |
+|---|---|
+| Wordmark | Brand band, row 1 left |
+| Main nav | Brand band, row 1 centre; phone disclosure unchanged |
+| Subscribe, Log in | Brand band, row 1 right |
+| `What's on in <city>` | Brand band, row 2 |
+| Meta line: count, organizers, updated, zone | Brand band, row 2, under the heading |
+| Offline / saved-copy / stale banners, three full-width bands | One status chip at the end of the meta line; the full sentence opens in its popover |
+| Search pill | Brand band, row 2 right; full-width field on a phone |
+| Sector rail | Control bar, left |
+| Filters button | Control bar |
+| List / Month switch | Control bar |
+| Map toggle | Control bar at 1280 and up; floating pill on a phone |
+| Tide line, own full-width band | Header of the list column, directly above the first day |
+| Featured strip | The "This weekend" interlude, which falls back to featured events when the weekend is empty |
+| Full-width day header bands | 96px sticky date gutter |
+| Event row, 64px tile and three meta lines | Compact row, 44px visual and one meta line |
+| Month grid | Unchanged, behind the Month segment |
+| Map panel, half the screen at 1280 and up | Context rail card, collapsing to a note |
+| Organizer footer | Unchanged, page foot |
+| Empty, error and loading states | Unchanged |
+| Event sheet, filters sheet, subscribe dialog, phone search, toast | Unchanged |
+
+Two v1 files are gone because their work moved wholesale: `Header.tsx` became
+`BrandBand.tsx`, and `FeaturedStrip.tsx` became `Interlude.tsx`. Nine
+components are new: the brand band, the harbor contours, the control bar, the
+event visual, the context rail, the where panel, the interlude and the two
+halves of the status chip.
 
 ## What the data actually looks like
 

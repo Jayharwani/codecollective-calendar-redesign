@@ -148,18 +148,28 @@ export default function MapPanel({
         });
         mapRef.current = map;
 
+        let styled = false;
+
         map.on('error', (e: unknown) => {
-          // A missing tile must never blank the agenda.
+          // Once the style is up, a missing tile is cosmetic and must never
+          // blank the agenda. Before that, an error means the style document
+          // itself did not arrive, which is fatal and worth saying at once —
+          // a sandboxed frame is refused by the tile host on the first
+          // request, and waiting out the watchdog would leave a card-sized
+          // hole on screen for twelve seconds.
           console.warn('Map error', e);
+          if (!cancelled && !styled) setFailed(true);
         });
 
-        // If the basemap never arrives, say so rather than leaving an empty
-        // rectangle. A sandboxed frame may not be allowed to reach the tile
-        // host at all.
+        // Backstop for the quieter failure, where the request neither resolves
+        // nor rejects and no error is ever raised.
         const styleWatchdog = setTimeout(() => {
           if (!cancelled && !map.isStyleLoaded()) setFailed(true);
         }, 12_000);
-        map.on('styledata', () => clearTimeout(styleWatchdog));
+        map.on('styledata', () => {
+          styled = true;
+          clearTimeout(styleWatchdog);
+        });
 
         map.on('load', () => {
           if (cancelled) return;

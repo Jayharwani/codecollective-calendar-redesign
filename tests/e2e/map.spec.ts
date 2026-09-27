@@ -79,3 +79,27 @@ test('OpenStreetMap attribution stays visible', async ({ page }) => {
   await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 60_000 });
   await expect(page.locator('.maplibregl-ctrl-attrib')).toContainText('OpenStreetMap');
 });
+
+test('a blocked tile host collapses the map card at once, not after the watchdog', async ({
+  page,
+}, testInfo) => {
+  // The published preview runs in a sandbox that refuses every cross-origin
+  // request, so this is the normal case there, not an edge case. A 12s
+  // watchdog would still get there eventually, which is exactly why this
+  // needs a test: the slow path and the fast path look identical at the end.
+  test.skip(testInfo.project.name !== 'desktop', 'the context rail is a desktop arrangement');
+
+  await page.route(/tiles\.openfreemap\.org/, (r) => r.abort());
+  await page.goto('/?city=baltimore&map=1');
+
+  const started = Date.now();
+  await expect(page.getByText('Map unavailable here. Every event is in the list.')).toBeVisible({
+    timeout: 10_000,
+  });
+  expect(Date.now() - started, 'the note should not wait out the style watchdog').toBeLessThan(
+    10_000,
+  );
+
+  // The point of collapsing is that the agenda is unaffected.
+  await expect(page.locator('[data-event-key]').first()).toBeVisible();
+});
