@@ -41,7 +41,7 @@ Then open <http://localhost:5173/?city=baltimore>.
 | `npm run build` | Typecheck, then a production build into `dist/` |
 | `npm run build:preview` | The hosted preview bundle, relative URLs plus a concept banner |
 | `npm test` | 179 unit tests |
-| `npm run test:e2e` | 79 Playwright tests, desktop and phone, including axe |
+| `npm run test:e2e` | 86 Playwright tests, desktop and phone, including axe |
 | `npm run typecheck` | TypeScript only |
 
 Two environment variables, both optional:
