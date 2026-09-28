@@ -1,8 +1,13 @@
 # Code Collective calendar, redesigned
 
+**[Open the live site →](https://jayharwani.github.io/codecollective-calendar-redesign/?city=baltimore)**
+
 A redesign of the [Code Collective](https://codecollective.us/calendar?city=baltimore)
 events calendar as a calm, time-first agenda. It reads the same live public
 event JSON the current site does, and changes nothing about the site itself.
+
+The deployed page reads the real feed, not a fixture: the event count and the
+"updated N hours ago" line move as the upstream calendar does.
 
 The problem it solves: Baltimore runs 1,695 upcoming listings across 105
 organizers, with 105 on the busiest Saturday alone. The current page shows them
