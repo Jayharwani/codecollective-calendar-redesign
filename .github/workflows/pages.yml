@@ -1,0 +1,64 @@
+name: Deploy to GitHub Pages
+
+# The site is a static bundle, so Pages can serve it directly. The live feed
+# at codecollective.us sends `Access-Control-Allow-Origin: *`, which means the
+# deployed page reads real data rather than a snapshot.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer push supersedes an in-flight one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Typecheck first. A deploy that compiles but does not typecheck is the
+      # kind of green build that hides a real defect.
+      - run: npm run typecheck
+
+      - run: npm test
+
+      - run: npm run build:only
+        env:
+          # Project pages mount at /<repo>/, not at the domain root.
+          VITE_BASE: /codecollective-calendar-redesign/
+          # A feed outage should show the saved copy and say so, not a dead
+          # page. The snapshot is only fetched when the live request fails.
+          VITE_SNAPSHOT_FALLBACK: '1'
+          VITE_SNAPSHOT_DATE: '25 September 2026'
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
