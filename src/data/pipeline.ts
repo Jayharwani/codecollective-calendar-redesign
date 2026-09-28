@@ -8,6 +8,7 @@ import {
   type FilterState,
   type PredicateContext,
 } from './filters';
+import { isPlaceholderTitle } from './display';
 import { TIME_OF_DAY_LABEL, TIME_OF_DAY_ORDER, isLive, timeOfDayOf } from './time';
 import type { CalEvent, SectorId, TimeOfDay } from './types';
 
@@ -289,23 +290,76 @@ export function buildRelaxations(
   return scored.slice(0, 3);
 }
 
-/** Counts for the month grid, keyed by day, plus the sectors seen that day. */
-export function monthModel(
-  filtered: readonly CalEvent[],
-): Map<string, { count: number; sectors: SectorId[]; titles: string[] }> {
-  const m = new Map<string, { count: number; sectors: SectorId[]; titles: string[] }>();
+/** How many events a month cell names before it just shows the count. */
+const MONTH_PREVIEW = 2;
+
+export type MonthPreview = { key: string; title: string; sector: SectorId };
+
+export type MonthCell = {
+  count: number;
+  /** Sector share of the day, largest first, for the cell's load bar. */
+  load: Array<{ sector: SectorId; count: number }>;
+  /** The events worth naming, best first. */
+  preview: MonthPreview[];
+};
+
+/**
+ * The month grid's per-day model: how many, what mix, and which two to name.
+ *
+ * Previews are chosen rather than taken in feed order. A title that is a form
+ * label or a raw timestamp is ranked last, so the fraction of a percent of the
+ * feed that arrives broken stops speaking for a whole day. Ties break on start
+ * time, so a cell reads chronologically.
+ */
+export function monthModel(filtered: readonly CalEvent[]): Map<string, MonthCell> {
+  const m = new Map<string, MonthCell>();
+  const pools = new Map<string, CalEvent[]>();
+  const tallies = new Map<string, Map<SectorId, number>>();
+
   for (const e of filtered) {
     let cell = m.get(e.dayKey);
     if (!cell) {
-      cell = { count: 0, sectors: [], titles: [] };
+      cell = { count: 0, load: [], preview: [] };
       m.set(e.dayKey, cell);
+      pools.set(e.dayKey, []);
+      tallies.set(e.dayKey, new Map());
     }
     cell.count++;
-    if (cell.titles.length < 2) cell.titles.push(e.title);
-    if (!cell.sectors.includes(e.primarySector) && cell.sectors.length < 5) {
-      cell.sectors.push(e.primarySector);
+    pools.get(e.dayKey)!.push(e);
+    const tally = tallies.get(e.dayKey)!;
+    tally.set(e.primarySector, (tally.get(e.primarySector) ?? 0) + 1);
+  }
+
+  for (const [dayKey, cell] of m) {
+    const tally = tallies.get(dayKey)!;
+    cell.load = [...tally.entries()]
+      .map(([sector, count]) => ({ sector, count }))
+      .sort((a, b) => b.count - a.count || a.sector.localeCompare(b.sector));
+
+    const ranked = pools
+      .get(dayKey)!
+      .map((e) => ({ e, junk: isPlaceholderTitle(e.title) }))
+      .sort((a, b) => {
+        if (a.junk !== b.junk) return a.junk ? 1 : -1;
+        return a.e.start.getTime() - b.e.start.getTime();
+      });
+
+    // A day often carries the same talk at two times, or the same title from
+    // two sources. Naming it twice in a cell two lines tall reads as a bug.
+    const seen = new Set<string>();
+    cell.preview = [];
+    for (const { e } of ranked) {
+      // Compare on letters and digits only. The same event reaches the feed
+      // from two scrapers with different punctuation and spacing often enough
+      // that an exact match misses most of the real duplicates.
+      const dedupeOn = e.title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+      if (seen.has(dedupeOn)) continue;
+      seen.add(dedupeOn);
+      cell.preview.push({ key: e.key, title: e.title, sector: e.primarySector });
+      if (cell.preview.length === MONTH_PREVIEW) break;
     }
   }
+
   return m;
 }
 

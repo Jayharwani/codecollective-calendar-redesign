@@ -439,10 +439,26 @@ span.live-dot.h-2 {
   }
 }
 
+/* The grid is a field of 28 quiet cells, so hover is the only thing telling
+   you they are all reachable. It stays a surface change, not a lift: 28 tiles
+   rising under the pointer would be the noisiest thing on the page. */
+.month-cell {
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+@media (hover: hover) {
+  .month-cell:hover:not([aria-disabled='true']) {
+    background: var(--bg-soft);
+    box-shadow: inset 0 0 0 1px var(--ink-2);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .row-lift,
   .interlude-img,
-  .where-row {
+  .where-row,
+  .month-cell {
     transition: none;
   }
   .row-lift:hover {

@@ -40,7 +40,7 @@ Then open <http://localhost:5173/?city=baltimore>.
 | `npm run dev` | Vite dev server |
 | `npm run build` | Typecheck, then a production build into `dist/` |
 | `npm run build:preview` | The hosted preview bundle, relative URLs plus a concept banner |
-| `npm test` | 169 unit tests |
+| `npm test` | 179 unit tests |
 | `npm run test:e2e` | 79 Playwright tests, desktop and phone, including axe |
 | `npm run typecheck` | TypeScript only |
 
@@ -176,6 +176,33 @@ Type is one superfamily, Instrument Sans Variable, across two axes: condensed
 widths carry dense date and time data, normal width carries reading text. In
 each zone exactly one element is weight 600.
 
+### The month grid
+
+Four weeks, not a calendar month, so the heading names the actual span rather
+than claiming "September 2026 to October 2026" for 28 days.
+
+The first version filled every cell with a five-step blue wash for volume and
+topped it with a row of five sector dots. Both marks were trying to say the
+same two things, and neither landed: 28 tinted rectangles read as a decorated
+table rather than as data, and because a Baltimore weekday carries events in
+most sectors, the dot row came out nearly identical in every cell.
+
+They are replaced by one mark per cell. A bar whose **length** is how full the
+day is — square-rooted, on the same scale as the tide line, so the two views
+agree about which days look busy — and whose **colour** is the sector the day
+is mostly about. That one varies where the dots did not: weekdays run to
+Government, weekends to Culture. Select a sector and every bar becomes that
+sector, recoloured against the filtered counts.
+
+Everything else recedes so the bars can carry the grid. Cells are white with a
+hairline instead of a wash, spent days drop their surface entirely and keep
+only a muted numeral, and today wears the same gold coin as the agenda gutter
+and the tide line.
+
+Below 640px a cell is about 48px wide, so the two event names are dropped
+rather than shipped as "Bi…" and "Ho…". At that width the grid answers which
+day to look at, and the names are one tap away in the list.
+
 ### Nothing was removed
 
 The reorganization moved things; it did not delete them. Every element v1 put
@@ -198,7 +225,7 @@ on screen has a named home in v2.
 | Featured strip | The "This weekend" interlude, which falls back to featured events when the weekend is empty |
 | Full-width day header bands | 96px sticky date gutter |
 | Event row, 64px tile and three meta lines | Compact row, 44px visual and one meta line |
-| Month grid | Unchanged, behind the Month segment |
+| Month grid | Behind the Month segment, rebuilt — see below |
 | Map panel, half the screen at 1280 and up | Context rail card, collapsing to a note |
 | Organizer footer | Unchanged, page foot |
 | Empty, error and loading states | Unchanged |
@@ -226,7 +253,7 @@ every test run in `src/data/snapshot.test.ts`.
 | Cancelled | 3 |
 | Tags mapping to Technology | 73 (4%) |
 
-Four things in that feed are not obvious, and each one changed the code:
+Five things in that feed are not obvious, and each one changed the code:
 
 **`startDate` is almost always UTC.** 1,642 of 1,695 rows carry a `+00:00`
 offset. Spot-checking rows against clock times written in their own
@@ -248,6 +275,14 @@ differently in Denver than in Baltimore. They are parsed in the scrapers' zone.
 **Plain text arrives HTML-encoded.** Fifteen titles and ten location fields
 carry things like `&#038;` and `&#8217;`, which rendered literally.
 
+**And sometimes percent-encoded instead**, which is how one event enters the
+feed twice: "From Crisis to Connection: A First Thursday Online Lunch &#038;
+Learn" and the same row with `%26`. Same title, same start, two strings — so
+it rendered as "Lunch %26 Learn" and no title comparison could see the pair as
+one event. A fixed table of escapes is decoded, rather than
+`decodeURIComponent`, which throws on a lone `%` and would turn "Save 50% on
+tickets" into mojibake.
+
 On top of those, three display-only transforms. Shouted titles are recased,
 either when a title opens with two or more all-caps words or when it is 60% or
 more uppercase, against an allowlist that keeps AI, UX, UMBC and anything with
@@ -266,9 +301,18 @@ title that is not a title. Three are raw ISO timestamps
 (`2026-09-30T18:30:00`), three are street addresses, one is `3:00 pm`, and five
 are scraper notices, including `There were no events found matching your search
 criteria. Please search again.` They come from the Harford County Government
-Calendar and Maryland Active Data Calendar sources. Nothing here filters them,
-because the brief puts the scraping pipeline out of scope and quietly hiding
-rows would be inventing a judgement the data does not support.
+Calendar and Maryland Active Data Calendar sources.
+
+Nothing here deletes them. Under 1% of the feed is not worth a filter that
+could swallow a real event, and quietly dropping rows would invent a judgement
+the data does not support. But the month grid names only two events per day,
+and it used to name the first two in feed order — which is how a dozen broken
+rows came to occupy a visibly large share of a 28-day grid, one cell reading
+`2026-09-30T18:30:00` and another `Start Date and Time`. Those titles are now
+ranked last when a cell chooses what to name, and named anyway when a day has
+nothing better, because an honest bad title beats an empty cell implying an
+empty day. Every one of them still appears in the list, and every one still
+counts toward its day.
 
 ---
 

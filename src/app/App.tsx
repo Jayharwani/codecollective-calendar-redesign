@@ -273,6 +273,7 @@ function Calendar() {
         events={derived.filtered}
         tz={cal.tz}
         todayKey={cal.todayKey}
+        sectorColor={activeSectorColor}
         onPickDay={scrollToDay}
       />
     ) : (

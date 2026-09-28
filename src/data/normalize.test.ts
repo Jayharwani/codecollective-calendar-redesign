@@ -373,3 +373,22 @@ describe('normalizeEvents', () => {
     expect(normalizeEvents(rows, opts)).toHaveLength(1);
   });
 });
+
+describe('percent escapes in scraped titles', () => {
+  const title = (name: string) => normalizeEvent(raw({ name }), opts)!.title;
+
+  it('lands both encodings of the same event on the same title', () => {
+    // The live feed carries this event twice, once with &#038; and once with
+    // %26. They have to agree or no dedupe can see them as one event.
+    const entity = title('From Crisis to Connection: A Lunch &#038; Learn');
+    const percent = title('From Crisis to Connection: A Lunch %26 Learn');
+    expect(percent).toBe(entity);
+    expect(percent).toContain('Lunch & Learn');
+  });
+
+  it('leaves a literal percent sign alone', () => {
+    // decodeURIComponent would throw on the first and mangle the second.
+    expect(title('Save 50% on tickets')).toContain('50%');
+    expect(title('Up to 20%25 off')).toContain('20%');
+  });
+});

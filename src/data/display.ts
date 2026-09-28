@@ -136,3 +136,46 @@ export function initialsFor(primary: string, fallback: string | null): string {
   if (words.length === 1) return words[0]!.slice(0, 2).toUpperCase();
   return (words[0]!.charAt(0) + words[1]!.charAt(0)).toUpperCase();
 }
+
+/** Field labels the scrapers pick up when a page has no real title. */
+const LABEL_TITLE =
+  /^(start|end)?\s*date(\s+and\s+time)?$|^time\s*zone\s*notice:?$|^(next|previous|prev|more|details|read\s+more|rsvp|register|untitled\s+event|event|all\s+day)$/i;
+
+/**
+ * A scraper that hit an empty result page and stored the page's apology as an
+ * event. One row in the feed does this, and it is the worst single string the
+ * grid could show: an event whose title says there are no events.
+ */
+const SCRAPED_ERROR = /there were no .{0,40}found|no results? (were )?found|please search again/i;
+
+/** A bare ISO stamp, or a bare clock time, standing in for a title. */
+const STAMP_TITLE = /^\d{4}-\d{2}-\d{2}([T\s]\d{2}:\d{2}(:\d{2})?)?$/;
+const CLOCK_TITLE = /^\d{1,2}:\d{2}\s*([ap]\.?m\.?)?$/i;
+
+/** Nothing but a street address, with no event name attached. */
+const ADDRESS_TITLE =
+  /^\d+[a-z]?\s+([\w.'-]+\s+){0,4}(st|street|ave|avenue|rd|road|blvd|boulevard|ln|lane|dr|drive|way|pl|place|ct|court|pkwy|parkway|hwy|highway|sq|square|ter|terrace)\.?$/i;
+
+/**
+ * Does this title tell a reader nothing about the event?
+ *
+ * 15 of the feed's 1,695 rows carry a form-field label, a raw timestamp or a
+ * bare street address where the title should be. That is under 1%, but the
+ * month grid previews only two events per day and picked them in feed order,
+ * so those 15 rows were filling a visibly large share of the grid.
+ *
+ * This only ever *demotes* a title in a preview. The event keeps its place in
+ * the list, the day count still includes it, and the raw value is untouched —
+ * dropping a real event to tidy a cell would be the worse trade.
+ */
+export function isPlaceholderTitle(title: string): boolean {
+  const t = title.trim();
+  if (t === '') return true;
+  return (
+    LABEL_TITLE.test(t) ||
+    STAMP_TITLE.test(t) ||
+    CLOCK_TITLE.test(t) ||
+    ADDRESS_TITLE.test(t) ||
+    SCRAPED_ERROR.test(t)
+  );
+}

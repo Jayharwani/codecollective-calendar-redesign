@@ -99,8 +99,30 @@ export function decodeEntities(input: string): string {
   );
 }
 
+/**
+ * Percent escapes that reached a title instead of a URL.
+ *
+ * Part of the feed is scraped from query strings, so the same event can arrive
+ * twice with its ampersand written `&#038;` once and `%26` the other time —
+ * which reads as "Lunch %26 Learn" on the page and defeats any dedupe that
+ * compares titles. Only this fixed set is decoded: running decodeURIComponent
+ * over free text turns a literal "50% 26 inch" into mojibake, and throws on a
+ * lone "%".
+ */
+const PERCENT_ESCAPES: Record<string, string> = {
+  '%20': ' ', '%21': '!', '%22': '"', '%23': '#', '%24': '$', '%25': '%',
+  '%26': '&', '%27': "'", '%28': '(', '%29': ')', '%2B': '+', '%2C': ',',
+  '%2D': '-', '%2E': '.', '%2F': '/', '%3A': ':', '%3B': ';', '%3F': '?',
+  '%40': '@', '%5F': '_', '%7C': '|',
+};
+
+function decodePercentEscapes(input: string): string {
+  if (!input.includes('%')) return input;
+  return input.replace(/%[0-9a-fA-F]{2}/g, (m) => PERCENT_ESCAPES[m.toUpperCase()] ?? m);
+}
+
 function cleanText(value: string | null | undefined): string {
-  return decodeEntities((value ?? '').replace(/\r\n?/g, '\n')).trim();
+  return decodePercentEscapes(decodeEntities((value ?? '').replace(/\r\n?/g, '\n'))).trim();
 }
 
 /**
